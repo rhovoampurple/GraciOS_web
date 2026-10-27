@@ -3312,94 +3312,57 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// ТУМБЛЕР "LESS ANIMATIONS" (ЧИСТЫЙ FADE IN/OUT)
+// БЕЗОПАСНЫЕ ТУМБЛЕРЫ: REDUCE TRANSPARENCY + LESS ANIMATIONS
 // ==========================================
+let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
+let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
-// 1. Добавляем CSS для плавного исчезновения
-const rmStyle = document.createElement('style');
-rmStyle.innerHTML = `
+// --- CSS СТИЛИ ---
+const styleUI = document.createElement('style');
+styleUI.innerHTML = `
+    /* Мгновенный серый фон без блюра */
+    body.reduce-transparency .lp {
+        background: var(--rt-color, #1c1c1e) !important; 
+        filter: none !important;        
+        backdrop-filter: none !important;
+        /* Убрали transition: none, чтобы не ломать возврат экрана */
+    }
+    
+    /* Настройки для Fade (Less animations) */
     body.reduce-motion .allApp,
-    body.reduce-motion .box,
-    body.reduce-motion .wallpaper,
-    body.reduce-motion .lp {
+    body.reduce-motion .wallpaper {
         transition: opacity 0.35s ease !important;
     }
-    /* Отключаем изменение размеров для иконки, чтобы она не растягивалась визуально */
     body.reduce-motion .box {
         transform: none !important;
     }
 `;
-document.head.appendChild(rmStyle);
+document.head.appendChild(styleUI);
 
-if (isReduceMotion) {
-    document.body.classList.add('reduce-motion');
-}
+document.documentElement.style.setProperty('--rt-color', savedRtColor);
+if (isReduceTransparency) document.body.classList.add('reduce-transparency');
+if (isReduceMotion) document.body.classList.add('reduce-motion');
 
-// 2. Перехватываем открытие приложения
-const originalOpenPopup = openPopupFromCurrentButton;
-openPopupFromCurrentButton = function() {
-    if (isReduceMotion) {
-        // 1. Прячем иконку, на которую нажали, чтобы она не растягивалась
-        currentOpeningBtn.style.transition = "none";
-        currentOpeningBtn.style.opacity = "0";
-
-        // 2. Прячем остальной рабочий стол (остальные иконки и обои)
-        document.querySelectorAll('.box').forEach(box => {
-            if (box !== currentOpeningBtn) {
-                box.style.transition = "opacity 0.35s ease";
-                box.style.opacity = "0";
-            }
-        });
-        wallpaper.style.transition = "opacity 0.35s ease";
-        wallpaper.style.opacity = "0";
-
-        // 3. Вызываем открытие приложения (оно начнется с opacity 0)
-        showPopup_open_close(app);
-        currentOpeningBtn.classList.add("open"); 
-        currentOpeningBtn.style.scale = "100%";
-
-        allApp.style.transition = "opacity 0.35s ease";
-        allApp.style.opacity = "0";
-        
-        lp.style.transition = "opacity 0.35s ease";
-        lp.classList.add("open");
-        lp.style.opacity = "0";
-
-        // 4. Запускаем Fade In для самого приложения и блюра
-        requestAnimationFrame(() => {
-            allApp.style.opacity = "1";
-            lp.style.opacity = "1";
-        });
-
-        nav.style.height = "40px";
-        isMo = true;
-
-        // 5. Возвращаем иконки и обои обратно (чтобы когда ты закроешь приложение, рабочий стол был на месте)
-        setTimeout(() => {
-            currentOpeningBtn.style.opacity = "1";
-            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
-            wallpaper.style.opacity = "1";
-        }, 400);
-
-        // Восстанавливаем обои и иконки, если пользователь закрывает приложение свайпом/кнопкой
-        nav.addEventListener("click", () => {
-            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
-            wallpaper.style.opacity = "1";
-        }, { once: true });
-
-    } else {
-        // Если тумблер выключен — оригинальная анимация
-        originalOpenPopup.apply(this, arguments);
-    }
-};
-
-// 3. Добавляем сам тумблер в меню
-function createRmToggle() {
-    const container = document.getElementById("app4animation");
+// --- ДОБАВЛЕНИЕ ТУМБЛЕРОВ В МЕНЮ ---
+function createSafeToggles() {
+    const blurToggle = document.getElementById("blurApp");
     
-    if (container && !document.getElementById("rm_toggle_btn")) {
-        const rmHTML = `
+    if (blurToggle && !document.getElementById("rt_toggle_btn")) {
+        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
+        
+        // Блок с тумблерами
+        const togglesHTML = `
+            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div id="rt_color_btn" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.3); background: ${savedRtColor}; cursor: pointer;"></div>
+                    <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s;">
+                        <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations (Fade)</span>
                 <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
@@ -3407,123 +3370,82 @@ function createRmToggle() {
                 </div>
             </div>
         `;
-        
-        container.insertAdjacentHTML('beforeend', rmHTML);
+        blurRow.insertAdjacentHTML('afterend', togglesHTML);
 
-        document.getElementById("rm_toggle_btn").addEventListener("click", () => {
+        // Обработчики
+        document.getElementById("rt_switch").addEventListener("click", () => {
+            isReduceTransparency = !isReduceTransparency;
+            localStorage.setItem("reduceTransparency", isReduceTransparency);
+            const sw = document.getElementById("rt_switch");
+            sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isReduceTransparency ? '20px' : '2px';
+            document.body.classList.toggle('reduce-transparency', isReduceTransparency);
+        });
+
+        document.getElementById("rm_switch").addEventListener("click", () => {
             isReduceMotion = !isReduceMotion;
             localStorage.setItem("reduceMotion", isReduceMotion);
-            
             const sw = document.getElementById("rm_switch");
             sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
             sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
-
-            if (isReduceMotion) {
-                document.body.classList.add('reduce-motion');
-            } else {
-                document.body.classList.remove('reduce-motion');
-            }
+            document.body.classList.toggle('reduce-motion', isReduceMotion);
         });
-    }
-// Запускаем поиск меню
-setInterval(createRmToggle, 500);
-// ==========================================
-// ТУМБЛЕР "REDUCE TRANSPARENCY" + ОТДЕЛЬНАЯ СТРОКА ЦВЕТА
-// ==========================================
-let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
-let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
-const rtStyle = document.createElement('style');
-rtStyle.innerHTML = `
-    /* Мгновенный фон */
-    body.reduce-transparency .lp {
-        background: var(--rt-color, #1c1c1e) !important; 
-        filter: none !important;        
-        backdrop-filter: none !important;
-        transition: none !important; 
-    }
-    
-    /* Стили для кнопки цвета в отдельной строке */
-    .rt-color-btn {
-        width: 26px; 
-        height: 26px; 
-        border-radius: 50%; 
-        border: 2px solid #ccc;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        cursor: pointer;
-    }
-    
-    /* Скрываем строку цвета, если тумблер выключен */
-    .rt-color-row {
-        display: ${isReduceTransparency ? 'flex' : 'none'};
-    }
-`;
-document.head.appendChild(rtStyle);
-
-document.documentElement.style.setProperty('--rt-color', savedRtColor);
-if (isReduceTransparency) {
-    document.body.classList.add('reduce-transparency');
-}
-
-function createTransparencyToggle() {
-    const blurToggle = document.getElementById("blurApp");
-    
-    if (blurToggle && !document.getElementById("rt_toggle_btn")) {
-        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
-        
-        // Делаем строку с тумблером
-        const rtHTML = `
-            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <!-- По клику на текст тоже открывается выбор цвета -->
-                <span id="rt_label" style="color: #333; font-size: 15px; font-weight: 500; cursor: pointer;">Reduce Transparency</span>
-                
-                <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
-                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                </div>
-            </div>
-
-            <!-- ОТДЕЛЬНАЯ СТРОКА ДЛЯ ЦВЕТА -->
-            <div class="khaysetting rt-color-row" id="rt_color_row" style="justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 15px; font-weight: 500;">Background Color</span>
-                <div id="rt_color_btn" class="rt-color-btn" style="background: ${savedRtColor};"></div>
-            </div>
-        `;
-        
-        blurRow.insertAdjacentHTML('afterend', rtHTML);
-
-        // Функция запроса цвета
-        const askForColor = () => {
+        document.getElementById("rt_color_btn").addEventListener("click", () => {
             const newColor = prompt("Введите HEX-код цвета (например, #1c1c1e):", savedRtColor);
             if (newColor && newColor.trim() !== "") {
                 let formattedColor = newColor.trim();
                 if (!formattedColor.startsWith("#")) formattedColor = "#" + formattedColor;
-                
                 savedRtColor = formattedColor;
                 localStorage.setItem("reduceTransparencyColor", newColor);
                 document.documentElement.style.setProperty('--rt-color', newColor);
                 document.getElementById("rt_color_btn").style.background = newColor;
             }
-        };
-
-        // Клик по кнопке цвета
-        document.getElementById("rt_color_btn").addEventListener("click", askForColor);
-        // Клик по тексту
-        document.getElementById("rt_label").addEventListener("click", askForColor);
-
-        // Обработчик тумблера
-        document.getElementById("rt_switch").addEventListener("click", () => {
-            isReduceTransparency = !isReduceTransparency;
-            localStorage.setItem("reduceTransparency", isReduceTransparency);
-            
-            const sw = document.getElementById("rt_switch");
-            sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceTransparency ? '20px' : '2px';
-            
-            // Показываем или скрываем строку цвета
-            document.getElementById("rt_color_row").style.display = isReduceTransparency ? 'flex' : 'none';
-            
-            document.body.classList.toggle('reduce-transparency', isReduceTransparency);
         });
     }
 }
-setInterval(createTransparencyToggle, 500);
+setInterval(createSafeToggles, 500);
+
+// --- ЛОГИКА ОТКРЫТИЯ С ПЛАВНЫМ FADE ---
+const originalOpenPopupSafe = openPopupFromCurrentButton;
+openPopupFromCurrentButton = function() {
+    if (isReduceMotion) {
+        showPopup_open_close(app);
+        currentOpeningBtn.classList.add("open"); 
+        currentOpeningBtn.style.scale = "100%";
+        currentOpeningBtn.style.transform = "none";
+
+        allApp.style.transition = "opacity 0.35s ease";
+        allApp.style.opacity = "0";
+        allApp.style.scale = "100%";
+        allApp.style.transform = "none";
+        
+        lp.style.transition = "opacity 0.35s ease";
+        lp.classList.add("open");
+        
+        // Если прозрачность ВЫКЛЮЧЕНА, локскрин должен плавно исчезнуть
+        if (!isReduceTransparency) {
+            lp.style.opacity = "0";
+        } else {
+            lp.style.opacity = "1";
+        }
+
+        requestAnimationFrame(() => {
+            allApp.style.opacity = "1";
+        });
+
+        nav.style.height = "40px";
+        isMo = true;
+
+        // ВОЗВРАЩАЕМ ВСЕ НАЗАД ПРИ ЗАКРЫТИИ (кнопка Home)
+        nav.addEventListener("click", () => {
+            allApp.style.opacity = "1"; // Сброс прозрачности приложения
+            lp.style.opacity = "0";     // Прячем локскрин
+            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
+            wallpaper.style.opacity = "1";
+        }, { once: true });
+
+    } else {
+        originalOpenPopupSafe.apply(this, arguments);
+    }
+};
