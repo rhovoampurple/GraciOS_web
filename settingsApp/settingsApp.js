@@ -3430,33 +3430,40 @@ function createRmToggle() {
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
 // ==========================================
-// ТУМБЛЕР "REDUCE TRANSPARENCY" (СЕРЫЙ ФОН)
+// ТУМБЛЕР "REDUCE TRANSPARENCY" + СКРОЛЛ ЭКРАНА
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 
-// 1. Добавляем CSS. Когда класс reduce-transparency активен, 
-// мы принудительно убираем блюр и ставим сплошной серый цвет.
+// 1. Добавляем CSS: серый фон + пролистывание меню
 const rtStyle = document.createElement('style');
 rtStyle.innerHTML = `
+    /* Серый фон вместо блюра */
     body.reduce-transparency .lp {
-        background: #1c1c1e !important; /* Темно-серый цвет (как в iOS) */
-        filter: none !important;        /* Отключаем размытие */
+        background: #1c1c1e !important; 
+        filter: none !important;        
         backdrop-filter: none !important;
+    }
+    
+    /* Включаем скролл для меню анимаций */
+    #app4animation {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important; /* Плавный скролл на телефонах */
+        padding-bottom: 80px !important; /* Место внизу, чтобы тумблеры не обрезались */
     }
 `;
 document.head.appendChild(rtStyle);
 
-// Применяем класс при загрузке, если тумблер был включен
 if (isReduceTransparency) {
     document.body.classList.add('reduce-transparency');
 }
 
-// 2. Функция добавления тумблера в меню
+// 2. Вставляем тумблер ПОД кнопку Blur
 function createTransparencyToggle() {
-    const container = document.getElementById("app4animation");
+    const blurToggle = document.getElementById("blurApp");
     
-    // Если меню найдено и тумблера еще нет
-    if (container && !document.getElementById("rt_toggle_btn")) {
+    if (blurToggle && !document.getElementById("rt_toggle_btn")) {
+        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
+        
         const rtHTML = `
             <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
@@ -3466,24 +3473,20 @@ function createTransparencyToggle() {
             </div>
         `;
         
-        // Вставляем в конец меню Animation
-        container.insertAdjacentHTML('beforeend', rtHTML);
+        blurRow.insertAdjacentHTML('afterend', rtHTML);
 
-        // Обработчик клика
         document.getElementById("rt_toggle_btn").addEventListener("click", () => {
             isReduceTransparency = !isReduceTransparency;
             localStorage.setItem("reduceTransparency", isReduceTransparency);
             
-            // Меняем цвет тумблера
             const sw = document.getElementById("rt_switch");
             sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
             sw.firstElementChild.style.left = isReduceTransparency ? '22px' : '2px';
             
-            // Включаем/выключаем режим
             document.body.classList.toggle('reduce-transparency', isReduceTransparency);
         });
     }
 }
 
-// Запускаем проверку появления меню
+// Запускаем проверку
 setInterval(createTransparencyToggle, 500);
