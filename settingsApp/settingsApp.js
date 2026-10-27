@@ -28,7 +28,7 @@ const back5 = document.getElementById("back_to_setting5");
 
 const lock_btn = document.getElementById("lock-btn");
 const back6 = document.getElementById("back_to_setting6");
-target.innerText += " ga";
+// target.innerText += " ga";
 const lock_option = document.getElementById("app4lock");
 const wallpaper_btn2 = document.querySelector(".wallpaper-btn-2");
 
@@ -85,7 +85,7 @@ function showPopup_open_close(target, mode = "flex", className = "open") {
   });
 }
 
-//target.innerText += "lax";
+// target.innerText += "lax";
 
 function hidePopup_open_close(target, mode = "none", className = "open") {
   const el =
@@ -912,7 +912,7 @@ const colorCircles = document.querySelectorAll(".color-circle");
 const customColorBtn = document.getElementById("customColor");
 const colorPicker = document.getElementById("colorPicker");
 const sizeSlider = document.getElementById("sizeSlider");
-target.innerText += "yA";
+// target.innerText += "yA";
 const date_preview = document.getElementById("dateTextPreview");
 const button_decor = document.getElementById("button_decor");
 
@@ -1668,7 +1668,7 @@ function handle_color_circle2(e) {
   }
 }
 
-target.innerText += "15";
+// target.innerText += "15"; HEEEREEEEEEEEEEEE
 
 function showHomeApp() {
   showPopup_open_close(app4_home);
