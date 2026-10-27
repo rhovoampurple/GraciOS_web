@@ -3313,16 +3313,25 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT БЕЗ ЗУМА)
+// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT БЕЗ ЗУМА И ВЫЛЕТОВ)
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
 const styleMotion = document.createElement('style');
 styleMotion.innerHTML = `
-    /* Убираем все плавные переходы размеров у иконок, чтобы они не улетали при закрытии */
-    body.reduce-motion .box {
-        transition: none !important;
+    /* Анимация закрытия: держим на весь экран, плавно убираем прозрачность */
+    @keyframes fadeOutMotion {
+        0% { opacity: 1; transform: none !important; scale: 100% !important; }
+        99% { opacity: 0; transform: none !important; scale: 100% !important; }
+        100% { opacity: 0; transform: none !important; scale: 100% !important; }
     }
+    
+    /* Применяем анимацию ТОЛЬКО когда приложение закрывается (теряет класс open) */
+    body.reduce-motion .box.was-open:not(.open) {
+        animation: fadeOutMotion 0.3s ease forwards !important;
+        pointer-events: none !important;
+    }
+    
     /* Оставляем плавность только для контента приложения */
     body.reduce-motion .allApp {
         transition: opacity 0.3s ease !important;
@@ -3364,22 +3373,26 @@ setInterval(() => {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
-            // Вызываем оригинал, чтобы убрать локскрин
             originalFunc.apply(this, arguments);
 
             if (isReduceMotion) {
-                // 1. Иконка МГНОВЕННО занимает весь экран (без зума)
+                // Добавляем класс, чтобы CSS знал, что приложение было открыто
+                currentOpeningBtn.classList.add("was-open");
+
+                // 1. Иконка МГНОВЕННО занимает весь экран
                 currentOpeningBtn.style.transition = "none";
                 currentOpeningBtn.style.transform = "none"; 
                 currentOpeningBtn.style.scale = "100%";
+                currentOpeningBtn.style.opacity = "1";
 
                 // 2. Контент приложения проявляется
-                allApp.style.transition = "opacity 0.3s ease";
+                allApp.style.transition = "none";
                 allApp.style.transform = "none";
                 allApp.style.scale = "100%";
                 allApp.style.opacity = "0";
 
                 requestAnimationFrame(() => {
+                    allApp.style.transition = "opacity 0.3s ease";
                     allApp.style.opacity = "1";
                 });
             }
@@ -3387,6 +3400,14 @@ setInterval(() => {
         lastOpenPopupFunc = window.openPopupFromCurrentButton;
     }
 }, 300);
+
+// Очистка после закрытия: возвращаем иконке нормальный вид
+document.addEventListener("animationend", (e) => {
+    if (e.animationName === "fadeOutMotion") {
+        e.target.classList.remove("was-open");
+        e.target.style.opacity = ""; // Убираем прозрачность, чтобы иконка снова стала видимой
+    }
+});
 // ==========================================
 // БЛОК 1: REDUCE TRANSPARENCY (МГНОВЕННЫЙ ФОН)
 // ==========================================
