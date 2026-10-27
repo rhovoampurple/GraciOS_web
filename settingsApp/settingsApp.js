@@ -3312,8 +3312,9 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЕЗОПАСНЫЙ ТУМБЛЕР "LESS ANIMATIONS"
+// ТУМБЛЕР "LESS ANIMATIONS" (ФИНАЛЬНАЯ ВЕРСИЯ)
 // ==========================================
+console.log("Скрипт GraciOS: Загрузка тумблера началась...");
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
 // 1. Добавляем CSS
@@ -3334,45 +3335,42 @@ if (isReduceMotion) {
     document.body.classList.add('reduce-motion');
 }
 
-// 2. Ждем, пока меню загрузится, и ищем кнопку Blur
-window.addEventListener('load', () => {
-    const checkExist = setInterval(() => {
-        // Ищем тумблер блюра по ID
-        const blurToggle = document.getElementById("blurApp");
-        
-        if (blurToggle && !document.getElementById("rm_toggle_btn")) {
-            clearInterval(checkExist); // Останавливаем поиск, как только нашли
-            
-            // Находим родительский блок (саму строку с надписью Blur)
-            const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
-            
-            const rmHTML = `
-                <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations</span>
-                    <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
-                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                    </div>
+// 2. Функция установки тумблера
+function createRmToggle() {
+    const container = document.getElementById("app4animation");
+    
+    // Если контейнер найден и тумблера еще нет
+    if (container && !document.getElementById("rm_toggle_btn")) {
+        const rmHTML = `
+            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations</span>
+                <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                 </div>
-            `;
+            </div>
+        `;
+        
+        // Вставляем в самый конец меню анимаций
+        container.insertAdjacentHTML('beforeend', rmHTML);
+
+        // Добавляем клик
+        document.getElementById("rm_toggle_btn").addEventListener("click", () => {
+            isReduceMotion = !isReduceMotion;
+            localStorage.setItem("reduceMotion", isReduceMotion);
             
-            // Вставляем наш тумблер сразу после строки с Blur
-            blurRow.insertAdjacentHTML('afterend', rmHTML);
+            const sw = document.getElementById("rm_switch");
+            sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
 
-            // Добавляем клик
-            document.getElementById("rm_toggle_btn").addEventListener("click", () => {
-                isReduceMotion = !isReduceMotion;
-                localStorage.setItem("reduceMotion", isReduceMotion);
-                
-                const sw = document.getElementById("rm_switch");
-                sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
-                sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
+            if (isReduceMotion) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        });
+        console.log("Скрипт GraciOS: Тумблер успешно добавлен!");
+    }
+}
 
-                if (isReduceMotion) {
-                    document.body.classList.add('reduce-motion');
-                } else {
-                    document.body.classList.remove('reduce-motion');
-                }
-            });
-        }
-    }, 500); // Проверяем каждые полсекунды
-});
+// 3. Запускаем проверку каждые полсекунды (вдруг меню грузится с задержкой)
+setInterval(createRmToggle, 500);
