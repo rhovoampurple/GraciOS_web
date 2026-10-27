@@ -1,3 +1,16 @@
+// ==========================================
+// ХИТРЫЙ ТРЮК: Принудительно задаем твои значения 
+// и перезагружаем страницу ОДИН раз, чтобы движок их считал
+// ==========================================
+if (!localStorage.getItem("graci_custom_applied")) {
+    localStorage.setItem("scaleAllApp", "100");
+    localStorage.setItem("scaleWallpaperAnim", "100");
+    localStorage.setItem("blurAllApp", "30");
+    localStorage.setItem("blur_App_saved", "true");
+    localStorage.setItem("graci_custom_applied", "true");
+    location.reload(); 
+}
+
 const previewAspect = document.getElementById("previewAspect");
 const previewAll = document.getElementById("previewAll");
 const timeAllInput = document.getElementById("timeAll");
@@ -94,8 +107,7 @@ function initBezier(sectionId, isRatio, cubicInit) {
   function startDrag(handle, pointName) {
     const move = (e) => {
       let rect = canvas.getBoundingClientRect();
-      let x =
-        ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / 260;
+      let x = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / 260;
       let y = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) / 260;
       points[pointName].x = Math.min(Math.max(x, 0), 1);
       points[pointName].y = Math.min(Math.max(y, 0), 1);
@@ -128,25 +140,21 @@ function initBezier(sectionId, isRatio, cubicInit) {
   drawBezier();
 }
 
-// Sự kiện thay đổi time_all
 timeAllInput.value = time_all;
 timeAllVal.textContent = time_all;
 timeAllInput.addEventListener("input", (e) => {
   time_all = parseFloat(e.target.value);
   time_opening_app = time_all * currentSpeed;
   time_aspect_ratio_app = time_all * currentSpeed * 0.9;
-
   timeAllVal.textContent = time_all;
   saveSettings();
   updatePreviewTransition();
 });
 
-// Khởi tạo
 updatePreviewTransition();
 initBezier("section-aspect", true, cubic_ratio);
 initBezier("section-all", false, cubic_all);
 
-// Animation loop preview
 let toggle = true;
 setInterval(() => {
   previewAspect.style.aspectRatio = toggle ? "1 / 1" : "1 /2";
@@ -158,10 +166,8 @@ setInterval(() => {
 const scaleWallpaperAniminput = document.getElementById("scaleWallpaperAnim");
 const scaleWallpaperAnimVal = document.getElementById("scaleWallpaperAnimVal");
 
-scaleWallpaperAniminput.value =
-  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
-scaleWallpaperAnimVal.textContent =
-  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
+scaleWallpaperAniminput.value = parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
+scaleWallpaperAnimVal.textContent = parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
 document.getElementById("wallpaperPreviewAnim").style.scale = `${
   parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100
 }%`;
@@ -169,10 +175,8 @@ scaleWallpaper = parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
 
 function scaleWallpaperAnimEvent(e) {
   const val = parseFloat(e.target.value);
-
   document.getElementById("wallpaperPreviewAnim").style.scale = `${val}%`;
   scaleWallpaper = val;
-
   scaleWallpaperAnimVal.textContent = val;
   localStorage.setItem("scaleWallpaperAnim", val);
 }
@@ -181,8 +185,7 @@ const scaleAllAppinput = document.getElementById("scaleAllAppAnim");
 const scaleAllAppVal = document.getElementById("scaleAllAppVal");
 
 scaleAllAppinput.value = parseFloat(localStorage.getItem("scaleAllApp")) || 100;
-scaleAllAppVal.textContent =
-  parseFloat(localStorage.getItem("scaleAllApp")) || 100;
+scaleAllAppVal.textContent = parseFloat(localStorage.getItem("scaleAllApp")) || 100;
 document.getElementById("scaleAllAppPreivew").style.scale = `${
   parseFloat(localStorage.getItem("scaleAllApp")) || 100
 }%`;
@@ -191,15 +194,13 @@ scaleAllAppReverse = 100 / scaleAllApp;
 
 function scaleAllAppEvent(e) {
   const val = parseFloat(e.target.value);
-
   document.getElementById("scaleAllAppPreivew").style.scale = `${val}%`;
-
   scaleAllApp = val;
   scaleAllAppReverse = 100 / val;
-
   scaleAllAppVal.textContent = val;
   localStorage.setItem("scaleAllApp", val);
 }
+
 function scaleAllAppEventUp() {
   if (currentOpeningBtn) {
     currentOpeningBtn.style.transition = "none";
@@ -224,15 +225,10 @@ blurCustomOpeing = parseFloat(localStorage.getItem("blurAllApp")) || 30;
 
 function blurAllAppEvent(e) {
   const val = parseFloat(e.target.value);
-
-  document.getElementById(
-    "blurAllAppPreivew"
-  ).style.filter = `blur(calc(${val}px - ${val}px / 2))`;
-
+  document.getElementById("blurAllAppPreivew").style.filter = `blur(calc(${val}px - ${val}px / 2))`;
   blurCustomOpeing = val;
   if (localStorage.getItem("blur_App_saved"))
     lp.style.filter = `blur(${blurCustomOpeing}px)`;
-
   blurAllAppVal.textContent = val;
   localStorage.setItem("blurAllApp", val);
 }
@@ -247,29 +243,23 @@ function itemScrollIconPositionEvent(e) {
   const item = e.currentTarget;
   const size = item.getAttribute("data-sizeIcon");
   const position = item.getAttribute("data-positionIcon");
-  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => {
-    el.classList.remove("active");
-  });
+  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => el.classList.remove("active"));
   item.classList.add("active");
-
   document.querySelectorAll(".box").forEach((box) => {
     box.style.setProperty("--bg--sizeIcon", size);
     box.style.setProperty("--bg--positionIcon", position);
   });
   previewPositionIcon.style.setProperty("--bg--sizeIcon", size);
   previewPositionIcon.style.setProperty("--bg--positionIcon", position);
-
   localStorage.setItem("sizeIcon", size);
   localStorage.setItem("positionIcon", position);
 }
 
 const timeHidingIcon = document.getElementById("timeHidingIcon");
 const timeHidingIconVal = document.getElementById("timeHidingIconVal");
-
 const delayHidingIcon = document.getElementById("delayHidingIcon");
 const delayHidingIconVal = document.getElementById("delayHidingIconVal");
 
-// Hàm riêng cho time
 function updateTimeHidingIcon() {
   const val = parseFloat(timeHidingIcon.value).toFixed(2);
   timeHidingIconVal.textContent = val;
@@ -277,7 +267,6 @@ function updateTimeHidingIcon() {
   localStorage.setItem("timeHidingIcon", `${val}`);
 }
 
-// Hàm riêng cho delay
 function updateDelayHidingIcon() {
   const val = parseFloat(delayHidingIcon.value).toFixed(2);
   delayHidingIconVal.textContent = val;
@@ -291,16 +280,11 @@ function resetAnimOpenAppBtnEvent(e) {
   time_aspect_ratio_app = time_all * currentSpeed * 0.9;
   cubic_ratio = "cubic-bezier(0.05,0.55,0.2,0.95)";
   cubic_all = "cubic-bezier(0.15,0.45,0.45,0.85)";
-
   saveSettings();
-
-  // Cập nhật UI
   document.getElementById("timeAll").value = time_all;
   document.getElementById("timeAllVal").textContent = time_all;
-
-  // Cập nhật đồ thị cubic
-  updatePreviewTransition(true);
-  updateBezierGraphs();
+  updatePreviewTransition(true); 
+  updateBezierGraphs(); 
 
   scaleAllAppinput.value = 100;
   scaleAllAppVal.textContent = 100;
@@ -322,9 +306,7 @@ function resetAnimOpenAppBtnEvent(e) {
   scaleWallpaperAniminput.value = 100;
   scaleWallpaperAnimVal.textContent = 100;
   const valScaleWallpaper = 100;
-  document.getElementById(
-    "wallpaperPreviewAnim"
-  ).style.scale = `${valScaleWallpaper}%`;
+  document.getElementById("wallpaperPreviewAnim").style.scale = `${valScaleWallpaper}%`;
   scaleWallpaper = valScaleWallpaper;
   scaleWallpaperAnimVal.textContent = valScaleWallpaper;
   localStorage.setItem("scaleWallpaperAnim", valScaleWallpaper);
@@ -332,32 +314,22 @@ function resetAnimOpenAppBtnEvent(e) {
   const timeHidingIconAppOpening = 0.3;
   timeHidingIcon.value = timeHidingIconAppOpening;
   timeHidingIconVal.textContent = timeHidingIconAppOpening;
-  root.style.setProperty(
-    "--bg--timeHidingIcon",
-    `${timeHidingIconAppOpening * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--timeHidingIcon", `${timeHidingIconAppOpening * currentSpeed}s`);
   localStorage.setItem("timeHidingIcon", `${timeHidingIconAppOpening}`);
 
   const delayHidingIconAppOpening = 0;
   delayHidingIcon.value = delayHidingIconAppOpening;
   delayHidingIconVal.textContent = delayHidingIconAppOpening;
-  root.style.setProperty(
-    "--bg--delayHidingIcon",
-    `${delayHidingIconAppOpening * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--delayHidingIcon", `${delayHidingIconAppOpening * currentSpeed}s`);
   localStorage.setItem("delayHidingIcon", `${delayHidingIconAppOpening}`);
 
-  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => {
-    el.classList.remove("active");
-  });
-
+  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => el.classList.remove("active"));
   document.querySelectorAll(".box").forEach((box) => {
     box.style.setProperty("--bg--sizeIcon", "100%");
     box.style.setProperty("--bg--positionIcon", "top");
   });
   previewPositionIcon.style.setProperty("--bg--sizeIcon", "100%");
   previewPositionIcon.style.setProperty("--bg--positionIcon", "top");
-
   localStorage.setItem("sizeIcon", "100%");
   localStorage.setItem("positionIcon", "top");
 
@@ -365,11 +337,9 @@ function resetAnimOpenAppBtnEvent(e) {
   blurAllAppinput.value = valBlur;
   blurAllAppVal.textContent = valBlur;
   document.getElementById("blurAllAppPreivew").style.filter = `blur(30px)`;
-
   blurCustomOpeing = valBlur;
   if (localStorage.getItem("blur_App_saved"))
     lp.style.filter = `blur(${blurCustomOpeing}px)`;
-
   blurAllAppVal.textContent = valBlur;
   localStorage.setItem("blurAllApp", valBlur);
 }
@@ -379,17 +349,12 @@ function addEventCustomOpening() {
   scaleAllAppinput.addEventListener("input", scaleAllAppEvent);
   scaleAllAppinput.addEventListener("pointerup", scaleAllAppEventUp);
   blurAllAppinput.addEventListener("input", blurAllAppEvent);
-
   document.querySelectorAll(".itemScrollIconPosition").forEach((item) => {
     item.addEventListener("click", itemScrollIconPositionEvent);
   });
-
   timeHidingIcon.addEventListener("input", updateTimeHidingIcon);
   delayHidingIcon.addEventListener("input", updateDelayHidingIcon);
-
-  document
-    .getElementById("reset_anim_open_app_btn")
-    .addEventListener("click", resetAnimOpenAppBtnEvent);
+  document.getElementById("reset_anim_open_app_btn").addEventListener("click", resetAnimOpenAppBtnEvent);
 }
 
 function removeEventCustomOpening() {
@@ -397,83 +362,58 @@ function removeEventCustomOpening() {
   scaleAllAppinput.removeEventListener("input", scaleAllAppEvent);
   scaleAllAppinput.removeEventListener("pointerup", scaleAllAppEventUp);
   blurAllAppinput.removeEventListener("input", blurAllAppEvent);
-
   document.querySelectorAll(".itemScrollIconPosition").forEach((item) => {
     item.removeEventListener("click", itemScrollIconPositionEvent);
   });
-
   timeHidingIcon.removeEventListener("input", updateTimeHidingIcon);
   delayHidingIcon.removeEventListener("input", updateDelayHidingIcon);
-
-  document
-    .getElementById("reset_anim_open_app_btn")
-    .removeEventListener("click", resetAnimOpenAppBtnEvent);
+  document.getElementById("reset_anim_open_app_btn").removeEventListener("click", resetAnimOpenAppBtnEvent);
 }
 
 function animationCustomByTXT({
-  // Closing Transform closing
   valTimeTransform = 0.7,
   valDampingTransform = 0.2,
-
-  // Closing Scale closing
   timeScale = 0.6,
   valDampingScale = 0.15,
-
-  // Easing closing
   valEasing = 0.35,
   easingScaleClosing = 1 - valEasing,
   sensitivityNavBarValue = 0.08,
   maxDragNavValue = 150,
-
-  // Opening App
   time_allTmp = 0.4,
   valScaleApp = 100,
   valScaleWallpaper = 100,
   cubic_ratioParam = "cubic-bezier(.79,-0.25,.12,.95)",
   cubic_allParam = "cubic-bezier(.79,-0.25,.12,.95)",
-
   timeHidingIconAppTmp = 0.4,
   delayHidingIconAppTmp = 0,
-
   timeShowingIconAppTmp = 0.4,
   delayShowingIconAppTmp = 0,
   positionIconOpening = "top",
   sizeIconOpening = "100%",
-
-  // unlock animation
   easingForUnlockAnimation = 0.25,
   speedForUnlockAnimation = 0.6,
-
   animationGroupForUnlockAnimation = 1,
   animationForUnlockAnimation = 1,
 } = {}) {
-  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => {
-    el.classList.remove("active");
-  });
-
+  
+  document.querySelectorAll(".itemScrollIconPosition").forEach((el) => el.classList.remove("active"));
   document.querySelectorAll(".box").forEach((box) => {
     box.style.setProperty("--bg--sizeIcon", sizeIconOpening);
     box.style.setProperty("--bg--positionIcon", positionIconOpening);
   });
   previewPositionIcon.style.setProperty("--bg--sizeIcon", sizeIconOpening);
-  previewPositionIcon.style.setProperty(
-    "--bg--positionIcon",
-    positionIconOpening
-  );
-
+  previewPositionIcon.style.setProperty("--bg--positionIcon", positionIconOpening);
   localStorage.setItem("sizeIcon", sizeIconOpening);
   localStorage.setItem("positionIcon", positionIconOpening);
 
   const root = document.documentElement;
-  // ---------------- Closing Transform ----------------
+
   timeTransformClosing = valTimeTransform * currentSpeed;
   timeTransformClosingVal.textContent = valTimeTransform;
   timeTransformClosinginput.value = valTimeTransform;
-
   cubicTransformClosing = `cubic-bezier(.25,.1,.25,${1 + valDampingTransform})`;
   dampingTransformClosinginput.value = valDampingTransform;
   dampingTransformClosingVal.textContent = valDampingTransform;
-
   localStorage.setItem("timeTransformClosing", valTimeTransform);
   localStorage.setItem("dampingTransformClosing", valDampingTransform);
 
@@ -484,15 +424,12 @@ function animationCustomByTXT({
     loopTransformClosing = !loopTransformClosing;
   }, timeTransformClosing * 1000);
 
-  // ---------------- Closing Scale ----------------
   timeScaleClosing = timeScale * currentSpeed;
   timeScaleClosingVal.textContent = timeScale;
   timeScaleClosinginput.value = timeScale;
-
   cubicScaleClosing = `cubic-bezier(.25,.1,.25,${1 + valDampingScale})`;
   dampingScaleClosinginput.value = valDampingScale;
   dampingScaleClosingVal.textContent = valDampingScale;
-
   localStorage.setItem("timeScaleClosing", timeScale);
   localStorage.setItem("dampingScaleClosing", valDampingScale);
 
@@ -503,15 +440,9 @@ function animationCustomByTXT({
     loopScaleClosing = !loopScaleClosing;
   }, timeScaleClosing * 1000);
 
-  // ---------------- Easing ----------------
   easingScaleClosinginput.value = easingScaleClosing;
-
-  cubicScaleClosing = `cubic-bezier(.25,.1,${valEasing},${
-    1 + valDampingScale
-  })`;
-  cubicTransformClosing = `cubic-bezier(.25,.1,${valEasing},${
-    1 + valDampingTransform
-  })`;
+  cubicScaleClosing = `cubic-bezier(.25,.1,${valEasing},${1 + valDampingScale})`;
+  cubicTransformClosing = `cubic-bezier(.25,.1,${valEasing},${1 + valDampingTransform})`;
 
   previewScaleClosing.style.transition = `all ${timeScaleClosing}s ${cubicScaleClosing}`;
   previewTransformClosing.style.transition = `all ${timeTransformClosing}s ${cubicTransformClosing}`;
@@ -525,24 +456,18 @@ function animationCustomByTXT({
   easingScaleClosingVal.textContent = easingScaleClosing;
   localStorage.setItem("easingScaleClosing", valEasing.toFixed(2));
 
-  // ---------------- Opening App ----------------
   time_all = time_allTmp;
   time_opening_app = time_all * currentSpeed;
   time_aspect_ratio_app = time_all * currentSpeed * 0.9;
-
-  // Giờ lấy cubic từ tham số
   cubic_ratio = cubic_ratioParam;
   cubic_all = cubic_allParam;
-
   saveSettings();
 
   document.getElementById("timeAll").value = time_all;
   document.getElementById("timeAllVal").textContent = time_all;
-
   updatePreviewTransition(true);
   updateBezierGraphs();
 
-  // Scale App
   scaleAllAppinput.value = valScaleApp;
   scaleAllAppVal.textContent = valScaleApp;
   document.getElementById("scaleAllAppPreivew").style.scale = `${valScaleApp}%`;
@@ -558,49 +483,34 @@ function animationCustomByTXT({
     lp.style.scale = `${scaleAllAppReverse}`;
   }
 
-  // Scale Wallpaper
   scaleWallpaperAniminput.value = valScaleWallpaper;
   scaleWallpaperAnimVal.textContent = valScaleWallpaper;
-  document.getElementById(
-    "wallpaperPreviewAnim"
-  ).style.scale = `${valScaleWallpaper}%`;
+  document.getElementById("wallpaperPreviewAnim").style.scale = `${valScaleWallpaper}%`;
   scaleWallpaper = valScaleWallpaper;
   localStorage.setItem("scaleWallpaperAnim", valScaleWallpaper);
 
   const timeHidingIconAppOpening = timeHidingIconAppTmp;
   timeHidingIcon.value = timeHidingIconAppOpening;
   timeHidingIconVal.textContent = timeHidingIconAppOpening;
-  root.style.setProperty(
-    "--bg--timeHidingIcon",
-    `${timeHidingIconAppOpening * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--timeHidingIcon", `${timeHidingIconAppOpening * currentSpeed}s`);
   localStorage.setItem("timeHidingIcon", `${timeHidingIconAppOpening}`);
 
   const delayHidingIconAppOpening = delayHidingIconAppTmp;
   delayHidingIcon.value = delayHidingIconAppTmp;
   delayHidingIconVal.textContent = delayHidingIconAppOpening;
-  root.style.setProperty(
-    "--bg--delayHidingIcon",
-    `${delayHidingIconAppOpening * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--delayHidingIcon", `${delayHidingIconAppOpening * currentSpeed}s`);
   localStorage.setItem("delayHidingIcon", `${delayHidingIconAppOpening}`);
 
   const timeShowingIconAppClosingTmp2 = timeShowingIconAppTmp;
   timeShowingIcon.value = timeShowingIconAppTmp;
   timeShowingIconVal.textContent = timeShowingIconAppClosingTmp2;
-  root.style.setProperty(
-    "--bg--timeShowingIcon",
-    `${timeShowingIconAppClosingTmp2 * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--timeShowingIcon", `${timeShowingIconAppClosingTmp2 * currentSpeed}s`);
   localStorage.setItem("timeShowingIcon", `${timeShowingIconAppClosingTmp2}`);
 
   let delayShowingIconAppClosingTmp2 = delayShowingIconAppTmp;
   delayShowingIcon.value = delayShowingIconAppTmp;
   delayShowingIconVal.textContent = delayShowingIconAppClosingTmp2;
-  root.style.setProperty(
-    "--bg--delayShowingIcon",
-    `${delayShowingIconAppClosingTmp2 * currentSpeed}s`
-  );
+  root.style.setProperty("--bg--delayShowingIcon", `${delayShowingIconAppClosingTmp2 * currentSpeed}s`);
   localStorage.setItem("delayShowingIcon", `${delayShowingIconAppClosingTmp2}`);
 
   sensitivityNavBarVal.textContent = sensitivityNavBarValue;
@@ -610,9 +520,18 @@ function animationCustomByTXT({
   maxDragNavVal.textContent = maxDragNavValue;
   maxDragNav.value = maxDragNavValue;
   maxNav = maxDragNavValue;
-
   localStorage.setItem("sensitivityNavBar", sensitivityNavBarValue);
   localStorage.setItem("maxDragNav", maxDragNavValue);
+
+  // ДОБАВЛЯЕМ БЛЮР В САМУ ФУНКЦИЮ АНИМАЦИИ
+  const valBlur = 30;
+  blurAllAppinput.value = valBlur;
+  blurAllAppVal.textContent = valBlur;
+  document.getElementById("blurAllAppPreivew").style.filter = `blur(15px)`;
+  blurCustomOpeing = valBlur;
+  if (localStorage.getItem("blur_App_saved"))
+    lp.style.filter = `blur(${blurCustomOpeing}px)`;
+  localStorage.setItem("blurAllApp", valBlur);
 
   reset_anim_unlock_btn_event(
     (animunlock = 1),
@@ -622,11 +541,8 @@ function animationCustomByTXT({
   );
 }
 
-// ==========================================
-// АКТИВИРОВАННЫЙ БЛОК КАСТОМНОЙ АНИМАЦИИ
-// ==========================================
+// Вызываем функцию с нашими параметрами
 animationCustomByTXT({
-  /* ================= OPEN APP ================= */
   time_allTmp: 0.4, 
   valScaleApp: 100, 
   valScaleWallpaper: 100, 
@@ -634,18 +550,13 @@ animationCustomByTXT({
   cubic_allParam: "cubic-bezier(.79,-0.25,.12,.95)", 
   timeHidingIconAppTmp: 0.4, 
   delayHidingIconAppTmp: 0, 
-
-  /* ================= CLOSE APP ================= */
   valTimeTransform: 0.7, 
   valDampingTransform: 0.2, 
   timeScale: 0.6, 
   valDampingScale: 0.15, 
   valEasing: 0.35, 
-
   timeShowingIconAppTmp: 0.4, 
   delayShowingIconAppTmp: 0, 
-
-  // unlock animation
   easingForUnlockAnimation: 0.25,
   speedForUnlockAnimation: 0.6,
   animationGroupForUnlockAnimation: 1, 
