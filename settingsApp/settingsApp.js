@@ -3430,11 +3430,10 @@ function createRmToggle() {
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
 // ==========================================
-// ТУМБЛЕР "REDUCE TRANSPARENCY" + СКРОЛЛ ЭКРАНА
+// ТУМБЛЕР "REDUCE TRANSPARENCY" + МГНОВЕННЫЙ ФОН
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 
-// 1. Добавляем CSS: серый фон + пролистывание меню
 const rtStyle = document.createElement('style');
 rtStyle.innerHTML = `
     /* Серый фон вместо блюра */
@@ -3442,13 +3441,16 @@ rtStyle.innerHTML = `
         background: #1c1c1e !important; 
         filter: none !important;        
         backdrop-filter: none !important;
+        
+        /* МГНОВЕННОЕ ПОЯВЛЕНИЕ: отключаем плавный переход прозрачности */
+        transition: opacity 0s ease, transform 0s ease !important; 
     }
     
     /* Включаем скролл для меню анимаций */
     #app4animation {
         overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important; /* Плавный скролл на телефонах */
-        padding-bottom: 80px !important; /* Место внизу, чтобы тумблеры не обрезались */
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 80px !important;
     }
 `;
 document.head.appendChild(rtStyle);
@@ -3457,7 +3459,6 @@ if (isReduceTransparency) {
     document.body.classList.add('reduce-transparency');
 }
 
-// 2. Вставляем тумблер ПОД кнопку Blur
 function createTransparencyToggle() {
     const blurToggle = document.getElementById("blurApp");
     
@@ -3488,5 +3489,4 @@ function createTransparencyToggle() {
     }
 }
 
-// Запускаем проверку
 setInterval(createTransparencyToggle, 500);
