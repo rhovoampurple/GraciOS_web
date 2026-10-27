@@ -150,7 +150,7 @@ initBezier("section-all", false, cubic_all);
 let toggle = true;
 setInterval(() => {
   previewAspect.style.aspectRatio = toggle ? "1 / 1" : "1 /2";
-  previewAspect.style.width = "100px";
+  previewAspect.style.width = "110px";
   previewAll.style.transform = toggle ? "scale(0.5)" : "scale(1.2)";
   toggle = !toggle;
 }, 1000);
@@ -159,11 +159,11 @@ const scaleWallpaperAniminput = document.getElementById("scaleWallpaperAnim");
 const scaleWallpaperAnimVal = document.getElementById("scaleWallpaperAnimVal");
 
 scaleWallpaperAniminput.value =
-  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 110;
+  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
 scaleWallpaperAnimVal.textContent =
-  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 110;
+  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
 document.getElementById("wallpaperPreviewAnim").style.scale = `${
-  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 110
+  parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100
 }%`;
 
 function scaleWallpaperAnimEvent(e) {
@@ -179,11 +179,11 @@ function scaleWallpaperAnimEvent(e) {
 const scaleAllAppinput = document.getElementById("scaleAllAppAnim");
 const scaleAllAppVal = document.getElementById("scaleAllAppVal");
 
-scaleAllAppinput.value = parseFloat(localStorage.getItem("scaleAllApp")) || 86;
+scaleAllAppinput.value = parseFloat(localStorage.getItem("scaleAllApp")) || 100;
 scaleAllAppVal.textContent =
-  parseFloat(localStorage.getItem("scaleAllApp")) || 86;
+  parseFloat(localStorage.getItem("scaleAllApp")) || 100;
 document.getElementById("scaleAllAppPreivew").style.scale = `${
-  parseFloat(localStorage.getItem("scaleAllApp")) || 86
+  parseFloat(localStorage.getItem("scaleAllApp")) || 100
 }%`;
 
 function scaleAllAppEvent(e) {
@@ -210,11 +210,11 @@ function scaleAllAppEventUp() {
 const blurAllAppinput = document.getElementById("blurAllAppAnim");
 const blurAllAppVal = document.getElementById("blurAllAppVal");
 
-blurAllAppinput.value = localStorage.getItem("blurAllApp") || 20;
-blurAllAppVal.textContent = localStorage.getItem("blurAllApp") || 20;
+blurAllAppinput.value = localStorage.getItem("blurAllApp") || 30;
+blurAllAppVal.textContent = localStorage.getItem("blurAllApp") || 30;
 document.getElementById("blurAllAppPreivew").style.filter = `blur(calc(${
-  localStorage.getItem("blurAllApp") || 20
-}px - ${localStorage.getItem("blurAllApp") || 20}px / 2))`;
+  localStorage.getItem("blurAllApp") || 30
+}px - ${localStorage.getItem("blurAllApp") || 30}px / 2))`;
 
 function blurAllAppEvent(e) {
   const val = parseFloat(e.target.value);
