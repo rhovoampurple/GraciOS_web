@@ -3698,6 +3698,82 @@ function createRotationUI() {
 setInterval(createRotationUI, 500);
 
 // ==========================================
+// НАСТРОЙКА ВРАЩЕНИЯ ИКОНКИ (С ИСПРАВЛЕНИЕМ ВЕРСТКИ ЭКРАНА)
+// ==========================================
+let isIconRotation = localStorage.getItem("iconRotation") === "true";
+let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
+
+// 1. Добавляем CSS, чтобы экран стал ровным и прокручиваемым
+const rotFixStyle = document.createElement('style');
+rotFixStyle.innerHTML = `
+    /* Делаем экран App opening animation колонкой с прокруткой */
+    #app4AppOpeningAnimation {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        overflow-y: auto !important;
+        padding-top: 50px !important; /* Отступ сверху, чтобы не налезало на кнопку Назад */
+        padding-bottom: 100px !important;
+    }
+    /* Наш блок делаем фиксированной ширины */
+    #rot_toggle_wrapper {
+        width: 90% !important;
+        max-width: 400px !important;
+        flex-shrink: 0 !important; /* Запрещаем сжимать */
+        margin-bottom: 20px !important;
+    }
+`;
+document.head.appendChild(rotFixStyle);
+
+// 2. Функция добавления UI
+function createRotationUI() {
+    const container = document.getElementById("app4AppOpeningAnimation");
+    
+    if (container && !document.getElementById("rot_toggle_wrapper")) {
+        const rotHTML = `
+            <div class="khaysetting" id="rot_toggle_wrapper" style="display: flex; flex-direction: column; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #333; font-size: 16px; font-weight: 500;">Icon Rotation</span>
+                    <div id="rot_switch" style="width: 50px; height: 30px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s; cursor: pointer;">
+                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    </div>
+                </div>
+                
+                <div id="rot_slider_wrapper" style="display: ${isIconRotation ? 'block' : 'none'}; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="color: #666; font-size: 14px;">Angle</span>
+                        <span style="color: #f65268; font-size: 14px; font-weight: bold;" id="rot_angle_val">${iconRotationAngle}°</span>
+                    </div>
+                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                </div>
+            </div>
+        `;
+        
+        // Вставляем в конец
+        container.insertAdjacentHTML('beforeend', rotHTML);
+
+        document.getElementById("rot_switch").addEventListener("click", () => {
+            isIconRotation = !isIconRotation;
+            localStorage.setItem("iconRotation", isIconRotation);
+            const sw = document.getElementById("rot_switch");
+            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isIconRotation ? '22px' : '2px';
+            document.getElementById("rot_slider_wrapper").style.display = isIconRotation ? 'block' : 'none';
+        });
+
+        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
+            const val = e.target.value;
+            iconRotationAngle = parseInt(val);
+            localStorage.setItem("iconRotationAngle", iconRotationAngle);
+            document.getElementById("rot_angle_val").textContent = `${val}°`;
+        });
+    }
+}
+
+setInterval(createRotationUI, 500);
+
+// ==========================================
 // ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°)
 // ==========================================
 const originalOpenPopupRot = openPopupFromCurrentButton;
