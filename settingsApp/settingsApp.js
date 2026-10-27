@@ -3313,18 +3313,96 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЛОК 1: REDUCE TRANSPARENCY (СЕРЫЙ ФОН)
+// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT)
+// ==========================================
+let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
+
+// Жесткий CSS, который убивает анимацию зума при открытии и закрытии
+const styleMotion = document.createElement('style');
+styleMotion.innerHTML = `
+    body.reduce-motion .box,
+    body.reduce-motion .allApp {
+        transition: opacity 0.3s ease !important;
+        transform: none !important;
+        scale: 100% !important; /* Принудительно на весь экран */
+        aspect-ratio: auto !important;
+    }
+`;
+document.head.appendChild(styleMotion);
+
+function createMotionToggle() {
+    const blurToggle = document.getElementById("blurApp");
+    if (blurToggle && !document.getElementById("rm_toggle_btn")) {
+        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
+        
+        const rmHTML = `
+            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 15px; font-weight: 500;">Less animations (Fade)</span>
+                <div id="rm_switch" style="width: 44px; height: 26px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
+                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                </div>
+            </div>
+        `;
+        blurRow.insertAdjacentHTML('afterend', rmHTML);
+
+        document.getElementById("rm_switch").addEventListener("click", () => {
+            isReduceMotion = !isReduceMotion;
+            localStorage.setItem("reduceMotion", isReduceMotion);
+            const sw = document.getElementById("rm_switch");
+            sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isReduceMotion ? '20px' : '2px';
+        });
+    }
+}
+setInterval(createMotionToggle, 500);
+
+// Перехват и защита от сброса
+let lastOpenPopupFunc = null;
+
+setInterval(() => {
+    if (window.openPopupFromCurrentButton !== lastOpenPopupFunc) {
+        const originalFunc = window.openPopupFromCurrentButton;
+        
+        window.openPopupFromCurrentButton = function() {
+            // Вызываем оригинал, чтобы он убрал локскрин
+            originalFunc.apply(this, arguments);
+
+            if (isReduceMotion) {
+                // Принудительно раскрываем на весь экран
+                currentOpeningBtn.style.transition = "none";
+                currentOpeningBtn.style.transform = "none"; 
+                currentOpeningBtn.style.scale = "100%";
+                currentOpeningBtn.style.width = "100%";
+                currentOpeningBtn.style.height = "100%";
+                currentOpeningBtn.style.aspectRatio = "1 / 1";
+
+                // Контент приложения тоже на весь экран и проявляется
+                allApp.style.transition = "opacity 0.3s ease";
+                allApp.style.transform = "none";
+                allApp.style.scale = "100%";
+                allApp.style.opacity = "0";
+
+                requestAnimationFrame(() => {
+                    allApp.style.opacity = "1";
+                });
+            }
+        };
+        lastOpenPopupFunc = window.openPopupFromCurrentButton;
+    }
+}, 300);
+// ==========================================
+// БЛОК 1: REDUCE TRANSPARENCY (МГНОВЕННЫЙ ФОН)
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
-// Добавляем CSS только для серого фона
 const styleTransparency = document.createElement('style');
 styleTransparency.innerHTML = `
     body.reduce-transparency .lp {
         background: var(--rt-color, #1c1c1e) !important; 
         filter: none !important;        
         backdrop-filter: none !important;
+        transition: background 0s ease !important; /* Мгновенный фон */
     }
     .lp:not(.open) { pointer-events: none !important; }
 `;
@@ -3373,64 +3451,4 @@ function createTransparencyToggle() {
         });
     }
 }
-// ==========================================
-// БЛОК 2: LESS ANIMATIONS (FADE IN)
-// ==========================================
-let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
-
-function createMotionToggle() {
-    const blurToggle = document.getElementById("blurApp");
-    if (blurToggle && !document.getElementById("rm_toggle_btn")) {
-        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
-        
-        const rmHTML = `
-            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 15px; font-weight: 500;">Less animations (Fade)</span>
-                <div id="rm_switch" style="width: 44px; height: 26px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
-                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                </div>
-            </div>
-        `;
-        blurRow.insertAdjacentHTML('afterend', rmHTML);
-
-        document.getElementById("rm_switch").addEventListener("click", () => {
-            isReduceMotion = !isReduceMotion;
-            localStorage.setItem("reduceMotion", isReduceMotion);
-            const sw = document.getElementById("rm_switch");
-            sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceMotion ? '20px' : '2px';
-        });
-    }
-}
-setInterval(createMotionToggle, 500);
-
-// --- ЗАЩИТА ОТ ПЕРЕЗАПИСИ И ЛОГИКА FADE ---
-let lastOpenPopupFunc = null;
-
-setInterval(() => {
-    // Если функция открытия была перезаписана сайтом, мы перехватываем её заново
-    if (window.openPopupFromCurrentButton !== lastOpenPopupFunc) {
-        const originalFunc = window.openPopupFromCurrentButton;
-        
-        window.openPopupFromCurrentButton = function() {
-            // Сначала вызываем оригинал, чтобы локскрин уехал
-            originalFunc.apply(this, arguments);
-
-            // Если включен Fade, убираем зум и делаем плавное появление
-            if (isReduceMotion) {
-                currentOpeningBtn.style.transition = "none";
-                currentOpeningBtn.style.transform = "none"; 
-
-                allApp.style.transition = "opacity 0.3s ease";
-                allApp.style.opacity = "0";
-                allApp.style.scale = "100%";
-
-                requestAnimationFrame(() => {
-                    allApp.style.opacity = "1";
-                });
-            }
-        };
-        lastOpenPopupFunc = window.openPopupFromCurrentButton;
-    }
-}, 300);
 setInterval(createTransparencyToggle, 500);
