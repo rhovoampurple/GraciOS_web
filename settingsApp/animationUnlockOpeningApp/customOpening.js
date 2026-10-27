@@ -150,7 +150,7 @@ initBezier("section-all", false, cubic_all);
 let toggle = true;
 setInterval(() => {
   previewAspect.style.aspectRatio = toggle ? "1 / 1" : "1 /2";
-  previewAspect.style.width = "110px";
+  previewAspect.style.width = "100px";
   previewAll.style.transform = toggle ? "scale(0.5)" : "scale(1.2)";
   toggle = !toggle;
 }, 1000);
