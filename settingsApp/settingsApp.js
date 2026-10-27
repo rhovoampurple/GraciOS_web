@@ -3530,3 +3530,76 @@ function createTransparencyToggle() {
 }
 
 setInterval(createTransparencyToggle, 500);
+// ==========================================
+// ТУМБЛЕР "ICON 90° ROTATION" (Поворот иконки)
+// ==========================================
+let isIconRotation = localStorage.getItem("iconRotation") === "true";
+
+function createRotationToggle() {
+    const container = document.getElementById("app4animation");
+    
+    if (container && !document.getElementById("rot_toggle_btn")) {
+        const rotHTML = `
+            <div class="khaysetting" id="rot_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Icon 90° Rotation</span>
+                <div id="rot_switch" style="width: 50px; height: 30px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', rotHTML);
+
+        document.getElementById("rot_toggle_btn").addEventListener("click", () => {
+            isIconRotation = !isIconRotation;
+            localStorage.setItem("iconRotation", isIconRotation);
+            
+            const sw = document.getElementById("rot_switch");
+            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isIconRotation ? '22px' : '2px';
+        });
+    }
+}
+
+// Перехватываем функцию открытия приложения
+const originalOpenPopupRot = openPopupFromCurrentButton;
+
+openPopupFromCurrentButton = function() {
+    // Если включен Fade (Less Animations), отдаем управление ему
+    if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
+        originalOpenPopupRot.apply(this, arguments);
+        return;
+    }
+
+    // Если включен Icon 90° Rotation
+    if (isIconRotation) {
+        showPopup_open_close(app);
+
+        // Задаем плавность
+        currentOpeningBtn.style.transition = `all ${time_opening_app}s ${cubic_all}, aspect-ratio ${time_aspect_ratio_app}s ${cubic_ratio}`;
+        allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+        wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+        lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
+
+        currentOpeningBtn.classList.add("open");
+        currentOpeningBtn.style.scale = "100%";
+        
+        // ПОВОРАЧИВАЕМ ИКОНКУ НА 90 ГРАДУСОВ
+        currentOpeningBtn.style.transform = `scale(${scaleAllAppReverse}) rotate(90deg)`;
+
+        // Анимируем фон и контент приложения (БЕЗ ПОВОРОТА)
+        wallpaper.style.scale = `${scaleWallpaper}%`;
+        lp.classList.add("open");
+        lp.style.scale = `${scaleAllAppReverse}`;
+        allApp.style.scale = `${scaleAllApp}%`;
+        
+        nav.style.height = "40px";
+        isMo = true;
+    } else {
+        // Обычная анимация
+        originalOpenPopupRot.apply(this, arguments);
+    }
+};
+
+// Запускаем поиск меню для добавления тумблера
+setInterval(createRotationToggle, 500);
