@@ -3318,7 +3318,7 @@ function preivewAnimationControlsCenter(e) {
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
-// CSS для серого фона
+// Добавляем CSS только для серого фона
 const styleTransparency = document.createElement('style');
 styleTransparency.innerHTML = `
     body.reduce-transparency .lp {
@@ -3326,7 +3326,6 @@ styleTransparency.innerHTML = `
         filter: none !important;        
         backdrop-filter: none !important;
     }
-    /* Защита от залипания локскрина */
     .lp:not(.open) { pointer-events: none !important; }
 `;
 document.head.appendChild(styleTransparency);
@@ -3374,7 +3373,6 @@ function createTransparencyToggle() {
         });
     }
 }
-setInterval(createTransparencyToggle, 500);
 // ==========================================
 // БЛОК 2: LESS ANIMATIONS (FADE IN)
 // ==========================================
@@ -3393,7 +3391,6 @@ function createMotionToggle() {
                 </div>
             </div>
         `;
-        // Вставляем после кнопки Blur (если Блок 1 уже добавил свой тумблер, этот встанет под ним)
         blurRow.insertAdjacentHTML('afterend', rmHTML);
 
         document.getElementById("rm_switch").addEventListener("click", () => {
@@ -3407,45 +3404,33 @@ function createMotionToggle() {
 }
 setInterval(createMotionToggle, 500);
 
-// Перехват открытия для Fade
-const originalOpenPopupSafe = openPopupFromCurrentButton;
-openPopupFromCurrentButton = function() {
-    if (!isReduceMotion) {
-        originalOpenPopupSafe.apply(this, arguments);
-        return;
+// --- ЗАЩИТА ОТ ПЕРЕЗАПИСИ И ЛОГИКА FADE ---
+let lastOpenPopupFunc = null;
+
+setInterval(() => {
+    // Если функция открытия была перезаписана сайтом, мы перехватываем её заново
+    if (window.openPopupFromCurrentButton !== lastOpenPopupFunc) {
+        const originalFunc = window.openPopupFromCurrentButton;
+        
+        window.openPopupFromCurrentButton = function() {
+            // Сначала вызываем оригинал, чтобы локскрин уехал
+            originalFunc.apply(this, arguments);
+
+            // Если включен Fade, убираем зум и делаем плавное появление
+            if (isReduceMotion) {
+                currentOpeningBtn.style.transition = "none";
+                currentOpeningBtn.style.transform = "none"; 
+
+                allApp.style.transition = "opacity 0.3s ease";
+                allApp.style.opacity = "0";
+                allApp.style.scale = "100%";
+
+                requestAnimationFrame(() => {
+                    allApp.style.opacity = "1";
+                });
+            }
+        };
+        lastOpenPopupFunc = window.openPopupFromCurrentButton;
     }
-
-    showPopup_open_close(app);
-
-    // Убираем локскрин
-    lp.style.transition = `all 0.3s ease`;
-    lp.classList.add("open");
-    lp.style.scale = `${scaleAllAppReverse}`;
-
-    // Иконка моментально на весь экран
-    currentOpeningBtn.style.transition = "none";
-    currentOpeningBtn.classList.add("open");
-    currentOpeningBtn.style.scale = "100%";
-    currentOpeningBtn.style.transform = "none";
-
-    wallpaper.style.transition = "none";
-    wallpaper.style.scale = `${scaleWallpaper}%`;
-
-    // Плавное появление контента
-    allApp.style.transition = "opacity 0.3s ease";
-    allApp.style.opacity = "0";
-    allApp.style.scale = `${scaleAllApp}%`;
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            allApp.style.opacity = "1";
-        });
-    });
-
-    nav.style.height = "40px";
-    isMo = true;
-
-    setTimeout(() => {
-        allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-    }, 350);
-};
+}, 300);
+setInterval(createTransparencyToggle, 500);
