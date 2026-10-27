@@ -3429,3 +3429,61 @@ function createRmToggle() {
 
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
+// ==========================================
+// ТУМБЛЕР "REDUCE TRANSPARENCY" (СЕРЫЙ ФОН)
+// ==========================================
+let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
+
+// 1. Добавляем CSS. Когда класс reduce-transparency активен, 
+// мы принудительно убираем блюр и ставим сплошной серый цвет.
+const rtStyle = document.createElement('style');
+rtStyle.innerHTML = `
+    body.reduce-transparency .lp {
+        background: #1c1c1e !important; /* Темно-серый цвет (как в iOS) */
+        filter: none !important;        /* Отключаем размытие */
+        backdrop-filter: none !important;
+    }
+`;
+document.head.appendChild(rtStyle);
+
+// Применяем класс при загрузке, если тумблер был включен
+if (isReduceTransparency) {
+    document.body.classList.add('reduce-transparency');
+}
+
+// 2. Функция добавления тумблера в меню
+function createTransparencyToggle() {
+    const container = document.getElementById("app4animation");
+    
+    // Если меню найдено и тумблера еще нет
+    if (container && !document.getElementById("rt_toggle_btn")) {
+        const rtHTML = `
+            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
+                <div id="rt_switch" style="width: 50px; height: 30px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                </div>
+            </div>
+        `;
+        
+        // Вставляем в конец меню Animation
+        container.insertAdjacentHTML('beforeend', rtHTML);
+
+        // Обработчик клика
+        document.getElementById("rt_toggle_btn").addEventListener("click", () => {
+            isReduceTransparency = !isReduceTransparency;
+            localStorage.setItem("reduceTransparency", isReduceTransparency);
+            
+            // Меняем цвет тумблера
+            const sw = document.getElementById("rt_switch");
+            sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isReduceTransparency ? '22px' : '2px';
+            
+            // Включаем/выключаем режим
+            document.body.classList.toggle('reduce-transparency', isReduceTransparency);
+        });
+    }
+}
+
+// Запускаем проверку появления меню
+setInterval(createTransparencyToggle, 500);
