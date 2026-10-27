@@ -3310,4 +3310,33 @@ function preivewAnimationControlsCenter(e) {
   }, 60);
 
   closeControlsCenter();
-}
+// ==========================================
+// ФИКС ДЛЯ GRACIOS (Обои и Блюр)
+// ==========================================
+window.addEventListener('load', () => {
+    // 1. Жестко фиксируем масштабы в 100%
+    localStorage.setItem("scaleWallpaperAnim", "100");
+    localStorage.setItem("scaleAllApp", "100");
+    
+    // Перезаписываем глобальные переменные
+    if (typeof scaleWallpaper !== 'undefined') scaleWallpaper = 100;
+    if (typeof scaleAllApp !== 'undefined') scaleAllApp = 100;
+    if (typeof scaleAllAppReverse !== 'undefined') scaleAllAppReverse = 1;
+
+    // 2. Жестко включаем блюр 30px
+    localStorage.setItem("blurAllApp", "30");
+    localStorage.setItem("blur_App_saved", "1");
+    if (typeof blurCustomOpeing !== 'undefined') blurCustomOpeing = 30;
+    
+    // Применяем блюр к слою
+    if (typeof lp !== 'undefined') {
+        lp.style.display = "flex";
+        lp.style.filter = "blur(30px)";
+    }
+
+    // 3. Делаем кнопку блюра в настройках активной (красной)
+    const blurBtn = document.getElementById("blurApp");
+    if (blurBtn && !blurBtn.classList.contains("active")) {
+        blurBtn.classList.add("active");
+    }
+});
