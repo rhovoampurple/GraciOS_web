@@ -210,6 +210,9 @@ function scaleAllAppEventUp() {
 const blurAllAppinput = document.getElementById("blurAllAppAnim");
 const blurAllAppVal = document.getElementById("blurAllAppVal");
 
+// Принудительно включаем блюр по умолчанию
+localStorage.setItem("blur_App_saved", "true");
+
 blurAllAppinput.value = localStorage.getItem("blurAllApp") || 30;
 blurAllAppVal.textContent = localStorage.getItem("blurAllApp") || 30;
 document.getElementById("blurAllAppPreivew").style.filter = `blur(calc(${
@@ -296,9 +299,9 @@ function resetAnimOpenAppBtnEvent(e) {
   updatePreviewTransition(true); // truyền true để ép update đồ thị theo cubic mới
   updateBezierGraphs(); // gọi để vẽ lại đồ thị
 
-  scaleAllAppinput.value = 86;
-  scaleAllAppVal.textContent = 86;
-  const valScaleApp = 86;
+  scaleAllAppinput.value = 100;
+  scaleAllAppVal.textContent = 100;
+  const valScaleApp = 100;
   document.getElementById("scaleAllAppPreivew").style.scale = `${valScaleApp}%`;
   scaleAllApp = valScaleApp;
   scaleAllAppReverse = 100 / valScaleApp;
@@ -313,9 +316,9 @@ function resetAnimOpenAppBtnEvent(e) {
     lp.style.scale = `${scaleAllAppReverse}`;
   }
 
-  scaleWallpaperAniminput.value = 110;
-  scaleWallpaperAnimVal.textContent = 110;
-  const valScaleWallpaper = 110;
+  scaleWallpaperAniminput.value = 100;
+  scaleWallpaperAnimVal.textContent = 100;
+  const valScaleWallpaper = 100;
   document.getElementById(
     "wallpaperPreviewAnim"
   ).style.scale = `${valScaleWallpaper}%`;
@@ -355,10 +358,10 @@ function resetAnimOpenAppBtnEvent(e) {
   localStorage.setItem("sizeIcon", "100%");
   localStorage.setItem("positionIcon", "top");
 
-  const valBlur = 20;
+  const valBlur = 30;
   blurAllAppinput.value = valBlur;
   blurAllAppVal.textContent = valBlur;
-  document.getElementById("blurAllAppPreivew").style.filter = `blur(15px)`;
+  document.getElementById("blurAllAppPreivew").style.filter = `blur(30px)`;
 
   blurCustomOpeing = valBlur;
   if (localStorage.getItem("blur_App_saved"))
@@ -421,8 +424,8 @@ function animationCustomByTXT({
 
   // Opening App
   time_allTmp = 0.25,
-  valScaleApp = 86,
-  valScaleWallpaper = 110,
+  valScaleApp = 100,
+  valScaleWallpaper = 100,
   cubic_ratioParam = "cubic-bezier(0.05,0.55,0.2,0.95)",
   cubic_allParam = "cubic-bezier(0.15,0.45,0.45,0.85)",
 
@@ -620,8 +623,8 @@ function animationCustomByTXT({
 //animationCustomByTXT({
 //  /* ================= OPEN APP ================= */
 //  time_allTmp: 0.4, // total duration for opening animation (should be between 0.3 - 1)
-//  valScaleApp: 92, // scale value for app when opening (should be between 60 - 100)
-//  valScaleWallpaper: 120, // scale value for wallpaper when opening (should be between 100 - 200)
+//  valScaleApp: 100, // scale value for app when opening (should be between 60 - 100)
+//  valScaleWallpaper: 100, // scale value for wallpaper when opening (should be between 100 - 200)
 //  cubic_ratioParam: "cubic-bezier(.79,-0.25,.12,.95)", // easing curve for app scaling during opening
 //  cubic_allParam: "cubic-bezier(.79,-0.25,.12,.95)", // main easing curve for opening
 //  timeHidingIconAppTmp: 0.4, // time to hide the icon (should be between 0 - 0.5)
@@ -643,4 +646,4 @@ function animationCustomByTXT({
 
 //  animationGroupForUnlockAnimation = 1, // (⚠️ ONLY BETWEEN 1 - 3)
 //  animationForUnlockAnimation = 1,// (⚠️ ONLY BETWEEN 1 - )
-//});
+//}); 
