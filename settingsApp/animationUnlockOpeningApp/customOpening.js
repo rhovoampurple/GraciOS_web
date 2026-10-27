@@ -165,6 +165,7 @@ scaleWallpaperAnimVal.textContent =
 document.getElementById("wallpaperPreviewAnim").style.scale = `${
   parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100
 }%`;
+scaleWallpaper = parseFloat(localStorage.getItem("scaleWallpaperAnim")) || 100;
 
 function scaleWallpaperAnimEvent(e) {
   const val = parseFloat(e.target.value);
@@ -185,6 +186,8 @@ scaleAllAppVal.textContent =
 document.getElementById("scaleAllAppPreivew").style.scale = `${
   parseFloat(localStorage.getItem("scaleAllApp")) || 100
 }%`;
+scaleAllApp = parseFloat(localStorage.getItem("scaleAllApp")) || 100;
+scaleAllAppReverse = 100 / scaleAllApp;
 
 function scaleAllAppEvent(e) {
   const val = parseFloat(e.target.value);
@@ -210,7 +213,6 @@ function scaleAllAppEventUp() {
 const blurAllAppinput = document.getElementById("blurAllAppAnim");
 const blurAllAppVal = document.getElementById("blurAllAppVal");
 
-// Принудительно включаем блюр по умолчанию
 localStorage.setItem("blur_App_saved", "true");
 
 blurAllAppinput.value = localStorage.getItem("blurAllApp") || 30;
@@ -218,6 +220,7 @@ blurAllAppVal.textContent = localStorage.getItem("blurAllApp") || 30;
 document.getElementById("blurAllAppPreivew").style.filter = `blur(calc(${
   localStorage.getItem("blurAllApp") || 30
 }px - ${localStorage.getItem("blurAllApp") || 30}px / 2))`;
+blurCustomOpeing = parseFloat(localStorage.getItem("blurAllApp")) || 30;
 
 function blurAllAppEvent(e) {
   const val = parseFloat(e.target.value);
@@ -296,8 +299,8 @@ function resetAnimOpenAppBtnEvent(e) {
   document.getElementById("timeAllVal").textContent = time_all;
 
   // Cập nhật đồ thị cubic
-  updatePreviewTransition(true); // truyền true để ép update đồ thị theo cubic mới
-  updateBezierGraphs(); // gọi để vẽ lại đồ thị
+  updatePreviewTransition(true);
+  updateBezierGraphs();
 
   scaleAllAppinput.value = 100;
   scaleAllAppVal.textContent = 100;
@@ -409,31 +412,31 @@ function removeEventCustomOpening() {
 
 function animationCustomByTXT({
   // Closing Transform closing
-  valTimeTransform = 0.5,
-  valDampingTransform = 0,
+  valTimeTransform = 0.7,
+  valDampingTransform = 0.2,
 
   // Closing Scale closing
-  timeScale = 0.5,
-  valDampingScale = 0,
+  timeScale = 0.6,
+  valDampingScale = 0.15,
 
   // Easing closing
-  valEasing = 0.25,
+  valEasing = 0.35,
   easingScaleClosing = 1 - valEasing,
   sensitivityNavBarValue = 0.08,
   maxDragNavValue = 150,
 
   // Opening App
-  time_allTmp = 0.25,
+  time_allTmp = 0.4,
   valScaleApp = 100,
   valScaleWallpaper = 100,
-  cubic_ratioParam = "cubic-bezier(0.05,0.55,0.2,0.95)",
-  cubic_allParam = "cubic-bezier(0.15,0.45,0.45,0.85)",
+  cubic_ratioParam = "cubic-bezier(.79,-0.25,.12,.95)",
+  cubic_allParam = "cubic-bezier(.79,-0.25,.12,.95)",
 
-  timeHidingIconAppTmp = 0.3,
+  timeHidingIconAppTmp = 0.4,
   delayHidingIconAppTmp = 0,
 
-  timeShowingIconAppTmp = 0.3,
-  delayShowingIconAppTmp = 0.05,
+  timeShowingIconAppTmp = 0.4,
+  delayShowingIconAppTmp = 0,
   positionIconOpening = "top",
   sizeIconOpening = "100%",
 
@@ -619,31 +622,32 @@ function animationCustomByTXT({
   );
 }
 
-// chỉnh tất cả
-//animationCustomByTXT({
-//  /* ================= OPEN APP ================= */
-//  time_allTmp: 0.4, // total duration for opening animation (should be between 0.3 - 1)
-//  valScaleApp: 100, // scale value for app when opening (should be between 60 - 100)
-//  valScaleWallpaper: 100, // scale value for wallpaper when opening (should be between 100 - 200)
-//  cubic_ratioParam: "cubic-bezier(.79,-0.25,.12,.95)", // easing curve for app scaling during opening
-//  cubic_allParam: "cubic-bezier(.79,-0.25,.12,.95)", // main easing curve for opening
-//  timeHidingIconAppTmp: 0.4, // time to hide the icon (should be between 0 - 0.5)
-//  delayHidingIconAppTmp: 0, // delay before hiding the icon (should be between 0 - 0.5)
-//
-//  /* ================= CLOSE APP ================= */
-//  valTimeTransform: 0.7, // transform duration when closing (should be between 0.4 - 1)
-//  valDampingTransform: 0.2, // damping factor for transform when closing (should be between 0.1 - 0.25)
-//  timeScale: 0.6, // scale duration when closing (should be between 0.4 - 1)
-//  valDampingScale: 0.15, // damping factor for scale when closing (should be between 0.1 - 0.4)
-//  valEasing: 0.35, // secondary easing factor for closing (should be between 0 - 1)
+// ==========================================
+// АКТИВИРОВАННЫЙ БЛОК КАСТОМНОЙ АНИМАЦИИ
+// ==========================================
+animationCustomByTXT({
+  /* ================= OPEN APP ================= */
+  time_allTmp: 0.4, 
+  valScaleApp: 100, 
+  valScaleWallpaper: 100, 
+  cubic_ratioParam: "cubic-bezier(.79,-0.25,.12,.95)", 
+  cubic_allParam: "cubic-bezier(.79,-0.25,.12,.95)", 
+  timeHidingIconAppTmp: 0.4, 
+  delayHidingIconAppTmp: 0, 
 
-//  timeShowingIconAppTmp: 0.4, // time to show the icon (should be between 0 - 0.5)
-//  delayShowingIconAppTmp: 0, // delay before showing the icon (should be between 0 - 0.5)
+  /* ================= CLOSE APP ================= */
+  valTimeTransform: 0.7, 
+  valDampingTransform: 0.2, 
+  timeScale: 0.6, 
+  valDampingScale: 0.15, 
+  valEasing: 0.35, 
 
-//  //unlock animation
-//  easingForUnlockAnimation = 0.25,
-//  speedForUnlockAnimation = 0.6,
+  timeShowingIconAppTmp: 0.4, 
+  delayShowingIconAppTmp: 0, 
 
-//  animationGroupForUnlockAnimation = 1, // (⚠️ ONLY BETWEEN 1 - 3)
-//  animationForUnlockAnimation = 1,// (⚠️ ONLY BETWEEN 1 - )
-//}); 
+  // unlock animation
+  easingForUnlockAnimation: 0.25,
+  speedForUnlockAnimation: 0.6,
+  animationGroupForUnlockAnimation: 1, 
+  animationForUnlockAnimation: 1 
+});
