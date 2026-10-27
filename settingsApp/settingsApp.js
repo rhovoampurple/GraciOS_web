@@ -3592,41 +3592,52 @@ function createRotationUI() {
 setInterval(createRotationUI, 500);
 
 // ==========================================
-// ЛОГИКА ОТКРЫТИЯ ПРИЛОЖЕНИЯ (С УЧЕТОМ ГРАДУСОВ)
+// ЛОГИКА ОТКРЫТИЯ ПРИЛОЖЕНИЯ (ИЗ 90° В 0°)
 // ==========================================
 const originalOpenPopupRot = openPopupFromCurrentButton;
 
 openPopupFromCurrentButton = function() {
-    // 1. Если включен Fade (Less Animations) — отдаем управление ему
+    // Если включен Fade — отдаем ему
     if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
         originalOpenPopupRot.apply(this, arguments);
         return;
     }
 
-    // 2. Если включено вращение иконки
     if (isIconRotation) {
         showPopup_open_close(app);
 
-        currentOpeningBtn.style.transition = `all ${time_opening_app}s ${cubic_all}, aspect-ratio ${time_aspect_ratio_app}s ${cubic_ratio}`;
-        allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-        wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-        lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
+        // 1. МГНОВЕННО (без transition) ставим иконку на угол 90°
+        currentOpeningBtn.style.transition = "none";
+        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg)`;
 
-        currentOpeningBtn.classList.add("open");
-        currentOpeningBtn.style.scale = "100%";
-        
-        // БЕРЕМ УГОЛ ИЗ ПАМЯТИ И ПРИМЕНЯЕМ
-        currentOpeningBtn.style.transform = `scale(${scaleAllAppReverse}) rotate(${iconRotationAngle}deg)`;
+        // 2. Ждем долю миллисекунды, чтобы браузер "запомнил" это положение
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // 3. Включаем плавные переходы
+                currentOpeningBtn.style.transition = `all ${time_opening_app}s ${cubic_all}, aspect-ratio ${time_aspect_ratio_app}s ${cubic_ratio}`;
+                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
 
-        wallpaper.style.scale = `${scaleWallpaper}%`;
-        lp.classList.add("open");
-        lp.style.scale = `${scaleAllAppReverse}`;
-        allApp.style.scale = `${scaleAllApp}%`;
-        
-        nav.style.height = "40px";
-        isMo = true;
+                // 4. ЗАПУСКАЕМ АНИМАЦИЮ: разворачиваем и плавно возвращаем в 0°
+                currentOpeningBtn.classList.add("open");
+                currentOpeningBtn.style.scale = "100%";
+                
+                // Ставим конечное положение: увеличенный масштаб и ПОВОРОТ 0°
+                currentOpeningBtn.style.transform = `scale(${scaleAllAppReverse}) rotate(0deg)`;
+
+                wallpaper.style.scale = `${scaleWallpaper}%`;
+                lp.classList.add("open");
+                lp.style.scale = `${scaleAllAppReverse}`;
+                allApp.style.scale = `${scaleAllApp}%`;
+                
+                nav.style.height = "40px";
+                isMo = true;
+            });
+        });
+
     } else {
-        // 3. Обычная анимация
+        // Обычная анимация
         originalOpenPopupRot.apply(this, arguments);
     }
 };
