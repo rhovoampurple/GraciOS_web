@@ -3316,16 +3316,18 @@ function preivewAnimationControlsCenter(e) {
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// 1. Убираем геометрические анимации для КОНТЕНТА приложения (Fade Out при закрытии)
+// 1. Добавляем CSS для плавного исчезновения
 const rmStyle = document.createElement('style');
 rmStyle.innerHTML = `
-    /* Отключаем изменения размеров для контейнера приложений и размытия */
     body.reduce-motion .allApp,
+    body.reduce-motion .box,
+    body.reduce-motion .wallpaper,
     body.reduce-motion .lp {
-        transition: opacity 0.3s ease !important;
+        transition: opacity 0.35s ease !important;
+    }
+    /* Отключаем изменение размеров для иконки, чтобы она не растягивалась визуально */
+    body.reduce-motion .box {
         transform: none !important;
-        scale: 100% !important;
-        animation: none !important;
     }
 `;
 document.head.appendChild(rmStyle);
@@ -3334,32 +3336,37 @@ if (isReduceMotion) {
     document.body.classList.add('reduce-motion');
 }
 
-// 2. Перехватываем функцию ОТКРЫТИЯ приложения
+// 2. Перехватываем открытие приложения
 const originalOpenPopup = openPopupFromCurrentButton;
 openPopupFromCurrentButton = function() {
     if (isReduceMotion) {
+        // 1. Прячем иконку, на которую нажали, чтобы она не растягивалась
+        currentOpeningBtn.style.transition = "none";
+        currentOpeningBtn.style.opacity = "0";
+
+        // 2. Прячем остальной рабочий стол (остальные иконки и обои)
+        document.querySelectorAll('.box').forEach(box => {
+            if (box !== currentOpeningBtn) {
+                box.style.transition = "opacity 0.35s ease";
+                box.style.opacity = "0";
+            }
+        });
+        wallpaper.style.transition = "opacity 0.35s ease";
+        wallpaper.style.opacity = "0";
+
+        // 3. Вызываем открытие приложения (оно начнется с opacity 0)
         showPopup_open_close(app);
-
-        // А) Иконка приложения мгновенно (без анимации размеров) становится на весь экран
-        currentOpeningBtn.style.transition = "opacity 0.3s ease";
-        currentOpeningBtn.classList.add("open");
+        currentOpeningBtn.classList.add("open"); 
         currentOpeningBtn.style.scale = "100%";
-        currentOpeningBtn.style.transform = "none"; // Отключаем сжатие
 
-        // Б) Контент приложения появляется плавно (Fade In)
-        allApp.style.transition = "opacity 0.3s ease";
-        allApp.style.opacity = "0"; // Начинаем с прозрачности
-        allApp.style.scale = "100%";
-        allApp.style.transform = "none";
-
-        // В) Слой размытия тоже проявляется плавно
-        lp.style.transition = "opacity 0.3s ease";
+        allApp.style.transition = "opacity 0.35s ease";
+        allApp.style.opacity = "0";
+        
+        lp.style.transition = "opacity 0.35s ease";
         lp.classList.add("open");
         lp.style.opacity = "0";
-        lp.style.scale = "100%";
-        lp.style.transform = "none";
 
-        // Запускаем плавное проявление
+        // 4. Запускаем Fade In для самого приложения и блюра
         requestAnimationFrame(() => {
             allApp.style.opacity = "1";
             lp.style.opacity = "1";
@@ -3367,8 +3374,22 @@ openPopupFromCurrentButton = function() {
 
         nav.style.height = "40px";
         isMo = true;
+
+        // 5. Возвращаем иконки и обои обратно (чтобы когда ты закроешь приложение, рабочий стол был на месте)
+        setTimeout(() => {
+            currentOpeningBtn.style.opacity = "1";
+            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
+            wallpaper.style.opacity = "1";
+        }, 400);
+
+        // Восстанавливаем обои и иконки, если пользователь закрывает приложение свайпом/кнопкой
+        nav.addEventListener("click", () => {
+            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
+            wallpaper.style.opacity = "1";
+        }, { once: true });
+
     } else {
-        // Если тумблер выключен — работает оригинальная анимация
+        // Если тумблер выключен — оригинальная анимация
         originalOpenPopup.apply(this, arguments);
     }
 };
@@ -3406,5 +3427,5 @@ function createRmToggle() {
     }
 }
 
-// Запускаем поиск меню при загрузке
+// Запускаем поиск меню
 setInterval(createRmToggle, 500);
