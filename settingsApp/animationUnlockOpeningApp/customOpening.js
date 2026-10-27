@@ -1,15 +1,4 @@
-// ==========================================
-// ХИТРЫЙ ТРЮК: Принудительно задаем твои значения 
-// и перезагружаем страницу ОДИН раз, чтобы движок их считал
-// ==========================================
-if (!localStorage.getItem("graci_custom_applied")) {
-    localStorage.setItem("scaleAllApp", "100");
-    localStorage.setItem("scaleWallpaperAnim", "100");
-    localStorage.setItem("blurAllApp", "30");
-    localStorage.setItem("blur_App_saved", "true");
-    localStorage.setItem("graci_custom_applied", "true");
-    location.reload(); 
-}
+ }
 
 const previewAspect = document.getElementById("previewAspect");
 const previewAll = document.getElementById("previewAll");
