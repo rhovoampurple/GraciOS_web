@@ -3425,8 +3425,6 @@ function createRmToggle() {
             }
         });
     }
-}
-
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
 // ==========================================
@@ -3528,5 +3526,4 @@ function createTransparencyToggle() {
         });
     }
 }
-
 setInterval(createTransparencyToggle, 500);
