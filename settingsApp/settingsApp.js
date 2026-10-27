@@ -85,7 +85,7 @@ function showPopup_open_close(target, mode = "flex", className = "open") {
   });
 }
 
-target.innerText += "lax";
+//target.innerText += "lax";
 
 function hidePopup_open_close(target, mode = "none", className = "open") {
   const el =
@@ -3312,11 +3312,11 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// НАДЕЖНЫЙ ТУМБЛЕР "LESS ANIMATIONS" (ТЕСТОВЫЙ)
+// БЕЗОПАСНЫЙ ТУМБЛЕР "LESS ANIMATIONS"
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// 1. Добавляем CSS-стили для отключения тяжелых анимаций
+// 1. Добавляем CSS
 const rmStyle = document.createElement('style');
 rmStyle.innerHTML = `
     body.reduce-motion .allApp,
@@ -3327,9 +3327,6 @@ rmStyle.innerHTML = `
         scale: 100% !important;
         animation: none !important;
     }
-    body.reduce-motion .lp {
-        transition: opacity 0.2s ease, transform 0.2s ease !important;
-    }
 `;
 document.head.appendChild(rmStyle);
 
@@ -3337,46 +3334,45 @@ if (isReduceMotion) {
     document.body.classList.add('reduce-motion');
 }
 
-// 2. Создаем тумблер, когда страница полностью загрузится
+// 2. Ждем, пока меню загрузится, и ищем кнопку Blur
 window.addEventListener('load', () => {
-    setTimeout(() => {
-        // Пытаемся найти меню анимаций. Если нет - ищем главное меню настроек.
-        let container = document.getElementById("app4animation") || document.getElementById("app4");
+    const checkExist = setInterval(() => {
+        // Ищем тумблер блюра по ID
+        const blurToggle = document.getElementById("blurApp");
         
-        if (container) {
-            // Если контейнер найден, вставляем тумблер
+        if (blurToggle && !document.getElementById("rm_toggle_btn")) {
+            clearInterval(checkExist); // Останавливаем поиск, как только нашли
+            
+            // Находим родительский блок (саму строку с надписью Blur)
+            const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
+            
             const rmHTML = `
-                <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin: 10px 0; background: rgba(255,255,255,0.15); border-radius: 15px; cursor: pointer;">
-                    <span style="color: #fff; font-size: 16px; font-family: sans-serif;">Less animations (Fade)</span>
-                    <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#007aff' : '#555'}; border-radius: 15px; position: relative; transition: 0.3s;">
-                        <div style="width: 26px; height: 26px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations</span>
+                    <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                     </div>
                 </div>
             `;
             
-            // Вставляем в начало контейнера, чтобы сразу бросалось в глаза
-            container.insertAdjacentHTML('afterbegin', rmHTML);
+            // Вставляем наш тумблер сразу после строки с Blur
+            blurRow.insertAdjacentHTML('afterend', rmHTML);
 
-            // Вешаем обработчик клика
+            // Добавляем клик
             document.getElementById("rm_toggle_btn").addEventListener("click", () => {
                 isReduceMotion = !isReduceMotion;
                 localStorage.setItem("reduceMotion", isReduceMotion);
                 
-                // Меняем визуал тумблера
                 const sw = document.getElementById("rm_switch");
-                sw.style.background = isReduceMotion ? '#007aff' : '#555';
+                sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
                 sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
 
-                // Включаем/выключаем класс на body
                 if (isReduceMotion) {
                     document.body.classList.add('reduce-motion');
                 } else {
                     document.body.classList.remove('reduce-motion');
                 }
             });
-            console.log("Тумблер Less animations успешно добавлен!");
-        } else {
-            console.log("Контейнер для настроек не найден. Проверь ID.");
         }
-    }, 500); // Задержка 0.5 сек, чтобы меню успело прогрузиться
+    }, 500); // Проверяем каждые полсекунды
 });
