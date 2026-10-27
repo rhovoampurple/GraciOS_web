@@ -3317,15 +3317,18 @@ function preivewAnimationControlsCenter(e) {
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// Жесткий CSS, который убивает анимацию зума при открытии и закрытии
 const styleMotion = document.createElement('style');
 styleMotion.innerHTML = `
+    /* Убиваем анимацию зума при закрытии, оставляем только Fade */
     body.reduce-motion .box,
     body.reduce-motion .allApp {
-        transition: opacity 0.3s ease !important;
+        transition: opacity 0.3s ease, transform 0s !important, scale 0s !important;
+    }
+    /* При открытии принудительно на весь экран */
+    body.reduce-motion .box.open,
+    body.reduce-motion .allApp.open {
         transform: none !important;
-        scale: 100% !important; /* Принудительно на весь экран */
-        aspect-ratio: auto !important;
+        scale: 100% !important;
     }
 `;
 document.head.appendChild(styleMotion);
@@ -3356,7 +3359,7 @@ function createMotionToggle() {
 }
 setInterval(createMotionToggle, 500);
 
-// Перехват и защита от сброса
+// Защита от перезаписи оригинальным кодом
 let lastOpenPopupFunc = null;
 
 setInterval(() => {
@@ -3364,7 +3367,6 @@ setInterval(() => {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
-            // Вызываем оригинал, чтобы он убрал локскрин
             originalFunc.apply(this, arguments);
 
             if (isReduceMotion) {
@@ -3372,11 +3374,8 @@ setInterval(() => {
                 currentOpeningBtn.style.transition = "none";
                 currentOpeningBtn.style.transform = "none"; 
                 currentOpeningBtn.style.scale = "100%";
-                currentOpeningBtn.style.width = "100%";
-                currentOpeningBtn.style.height = "100%";
-                currentOpeningBtn.style.aspectRatio = "1 / 1";
 
-                // Контент приложения тоже на весь экран и проявляется
+                // Контент приложения проявляется
                 allApp.style.transition = "opacity 0.3s ease";
                 allApp.style.transform = "none";
                 allApp.style.scale = "100%";
@@ -3398,11 +3397,16 @@ let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
 const styleTransparency = document.createElement('style');
 styleTransparency.innerHTML = `
+    /* Серый фон */
     body.reduce-transparency .lp {
         background: var(--rt-color, #1c1c1e) !important; 
         filter: none !important;        
         backdrop-filter: none !important;
-        transition: background 0s ease !important; /* Мгновенный фон */
+    }
+    /* МГНОВЕННОЕ ПОЯВЛЕНИЕ: отключаем плавность прозрачности */
+    body.reduce-transparency .lp.open {
+        transition: transform 0.3s ease, opacity 0s !important;
+        opacity: 1 !important;
     }
     .lp:not(.open) { pointer-events: none !important; }
 `;
