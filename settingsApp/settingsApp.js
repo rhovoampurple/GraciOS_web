@@ -3592,12 +3592,64 @@ function createRotationUI() {
 setInterval(createRotationUI, 500);
 
 // ==========================================
-// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0° БЕЗ ЗАЛИПАНИЙ)
+// НАСТРОЙКА ВРАЩЕНИЯ ИКОНКИ (ИСПРАВЛЕННЫЙ UI)
+// ==========================================
+let isIconRotation = localStorage.getItem("iconRotation") === "true";
+let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
+
+// Функция добавления UI в подменю App opening animation
+function createRotationUI() {
+    const container = document.getElementById("app4AppOpeningAnimation");
+    
+    if (container && !document.getElementById("rot_toggle_wrapper")) {
+        // ДОБАВЛЕНЫ СТИЛИ: margin-bottom: 40px, position: relative, z-index: 10
+        const rotHTML = `
+            <div class="khaysetting" id="rot_toggle_wrapper" style="display: flex; flex-direction: column; padding: 15px; margin-top: 10px; margin-bottom: 40px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; z-index: 10;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #333; font-size: 16px; font-weight: 500;">Icon Rotation</span>
+                    <div id="rot_switch" style="width: 50px; height: 30px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s; cursor: pointer;">
+                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    </div>
+                </div>
+                
+                <div id="rot_slider_wrapper" style="display: ${isIconRotation ? 'block' : 'none'}; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="color: #666; font-size: 14px;">Angle</span>
+                        <span style="color: #f65268; font-size: 14px; font-weight: bold;" id="rot_angle_val">${iconRotationAngle}°</span>
+                    </div>
+                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('afterbegin', rotHTML);
+
+        document.getElementById("rot_switch").addEventListener("click", () => {
+            isIconRotation = !isIconRotation;
+            localStorage.setItem("iconRotation", isIconRotation);
+            const sw = document.getElementById("rot_switch");
+            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isIconRotation ? '22px' : '2px';
+            document.getElementById("rot_slider_wrapper").style.display = isIconRotation ? 'block' : 'none';
+        });
+
+        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
+            const val = e.target.value;
+            iconRotationAngle = parseInt(val);
+            localStorage.setItem("iconRotationAngle", iconRotationAngle);
+            document.getElementById("rot_angle_val").textContent = `${val}°`;
+        });
+    }
+}
+
+setInterval(createRotationUI, 500);
+
+// ==========================================
+// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°)
 // ==========================================
 const originalOpenPopupRot = openPopupFromCurrentButton;
 
 openPopupFromCurrentButton = function() {
-    // Если включен Fade — отдаем управление ему
     if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
         originalOpenPopupRot.apply(this, arguments);
         return;
@@ -3605,33 +3657,26 @@ openPopupFromCurrentButton = function() {
 
     if (isIconRotation) {
         showPopup_open_close(app);
+        allApp.style.transform = "none"; // Сброс залипания контента
 
-        // 1. СБРОС ЗАЛИПАНИЯ: принудительно убираем поворот у самого приложения
-        allApp.style.transform = "none";
-
-        // 2. Добавляем класс open, чтобы иконка знала свои финальные размеры
         currentOpeningBtn.classList.add("open");
         
-        // 3. Настраиваем плавность для фона и контента
         allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
         wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
         lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
 
-        // 4. Запускаем анимацию иконки через Web Animations API
-        // Начинаем с поворота в 90° и масштаба 1, заканчиваем в 0° и нужном масштабе
+        // Анимация: от 90° к 0° с одновременным увеличением
         currentOpeningBtn.animate([
             { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
             { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
         ], {
-            duration: time_opening_app * 1000, // длительность в миллисекундах
-            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)', // плавное затухание
-            fill: 'forwards' // оставляем иконку в конечном положении
+            duration: time_opening_app * 1000,
+            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+            fill: 'forwards'
         });
 
-        // 5. Фиксируем финальный стиль иконки, чтобы при закрытии не было рывков
         currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
 
-        // 6. Анимируем остальные элементы
         wallpaper.style.scale = `${scaleWallpaper}%`;
         lp.classList.add("open");
         lp.style.scale = `${scaleAllAppReverse}`;
@@ -3640,7 +3685,6 @@ openPopupFromCurrentButton = function() {
         nav.style.height = "40px";
         isMo = true;
     } else {
-        // Обычная анимация
         originalOpenPopupRot.apply(this, arguments);
     }
 };
