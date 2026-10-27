@@ -3313,67 +3313,45 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЕЗОПАСНЫЕ ТУМБЛЕРЫ: REDUCE TRANSPARENCY + LESS ANIMATIONS
+// БЛОК 1: REDUCE TRANSPARENCY (СЕРЫЙ ФОН)
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
-let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
-// --- CSS СТИЛИ ---
-const styleUI = document.createElement('style');
-styleUI.innerHTML = `
-    /* Мгновенный серый фон без блюра */
+// CSS для серого фона
+const styleTransparency = document.createElement('style');
+styleTransparency.innerHTML = `
     body.reduce-transparency .lp {
         background: var(--rt-color, #1c1c1e) !important; 
         filter: none !important;        
         backdrop-filter: none !important;
-        /* Убрали transition: none, чтобы не ломать возврат экрана */
     }
-    
-    /* Настройки для Fade (Less animations) */
-    body.reduce-motion .allApp,
-    body.reduce-motion .wallpaper {
-        transition: opacity 0.35s ease !important;
-    }
-    body.reduce-motion .box {
-        transform: none !important;
-    }
+    /* Защита от залипания локскрина */
+    .lp:not(.open) { pointer-events: none !important; }
 `;
-document.head.appendChild(styleUI);
+document.head.appendChild(styleTransparency);
 
 document.documentElement.style.setProperty('--rt-color', savedRtColor);
 if (isReduceTransparency) document.body.classList.add('reduce-transparency');
-if (isReduceMotion) document.body.classList.add('reduce-motion');
 
-// --- ДОБАВЛЕНИЕ ТУМБЛЕРОВ В МЕНЮ ---
-function createSafeToggles() {
+function createTransparencyToggle() {
     const blurToggle = document.getElementById("blurApp");
-    
     if (blurToggle && !document.getElementById("rt_toggle_btn")) {
         const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
         
-        // Блок с тумблерами
-        const togglesHTML = `
-            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
+        const rtHTML = `
+            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 15px; font-weight: 500;">Reduce Transparency</span>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div id="rt_color_btn" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.3); background: ${savedRtColor}; cursor: pointer;"></div>
-                    <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s;">
+                    <div id="rt_color_btn" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.3); background: ${savedRtColor}; cursor: pointer;"></div>
+                    <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
                         <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                     </div>
                 </div>
             </div>
-
-            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations (Fade)</span>
-                <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
-                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                </div>
-            </div>
         `;
-        blurRow.insertAdjacentHTML('afterend', togglesHTML);
+        blurRow.insertAdjacentHTML('afterend', rtHTML);
 
-        // Обработчики
         document.getElementById("rt_switch").addEventListener("click", () => {
             isReduceTransparency = !isReduceTransparency;
             localStorage.setItem("reduceTransparency", isReduceTransparency);
@@ -3383,17 +3361,8 @@ function createSafeToggles() {
             document.body.classList.toggle('reduce-transparency', isReduceTransparency);
         });
 
-        document.getElementById("rm_switch").addEventListener("click", () => {
-            isReduceMotion = !isReduceMotion;
-            localStorage.setItem("reduceMotion", isReduceMotion);
-            const sw = document.getElementById("rm_switch");
-            sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
-            document.body.classList.toggle('reduce-motion', isReduceMotion);
-        });
-
         document.getElementById("rt_color_btn").addEventListener("click", () => {
-            const newColor = prompt("Введите HEX-код цвета (например, #1c1c1e):", savedRtColor);
+            const newColor = prompt("Введите HEX-код цвета:", savedRtColor);
             if (newColor && newColor.trim() !== "") {
                 let formattedColor = newColor.trim();
                 if (!formattedColor.startsWith("#")) formattedColor = "#" + formattedColor;
@@ -3405,48 +3374,78 @@ function createSafeToggles() {
         });
     }
 }
-setInterval(createSafeToggles, 500);
+setInterval(createTransparencyToggle, 500);
+// ==========================================
+// БЛОК 2: LESS ANIMATIONS (FADE IN)
+// ==========================================
+let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// --- ЛОГИКА ОТКРЫТИЯ С ПЛАВНЫМ FADE ---
+function createMotionToggle() {
+    const blurToggle = document.getElementById("blurApp");
+    if (blurToggle && !document.getElementById("rm_toggle_btn")) {
+        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
+        
+        const rmHTML = `
+            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 15px; font-weight: 500;">Less animations (Fade)</span>
+                <div id="rm_switch" style="width: 44px; height: 26px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
+                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                </div>
+            </div>
+        `;
+        // Вставляем после кнопки Blur (если Блок 1 уже добавил свой тумблер, этот встанет под ним)
+        blurRow.insertAdjacentHTML('afterend', rmHTML);
+
+        document.getElementById("rm_switch").addEventListener("click", () => {
+            isReduceMotion = !isReduceMotion;
+            localStorage.setItem("reduceMotion", isReduceMotion);
+            const sw = document.getElementById("rm_switch");
+            sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isReduceMotion ? '20px' : '2px';
+        });
+    }
+}
+setInterval(createMotionToggle, 500);
+
+// Перехват открытия для Fade
 const originalOpenPopupSafe = openPopupFromCurrentButton;
 openPopupFromCurrentButton = function() {
-    if (isReduceMotion) {
-        showPopup_open_close(app);
-        currentOpeningBtn.classList.add("open"); 
-        currentOpeningBtn.style.scale = "100%";
-        currentOpeningBtn.style.transform = "none";
+    if (!isReduceMotion) {
+        originalOpenPopupSafe.apply(this, arguments);
+        return;
+    }
 
-        allApp.style.transition = "opacity 0.35s ease";
-        allApp.style.opacity = "0";
-        allApp.style.scale = "100%";
-        allApp.style.transform = "none";
-        
-        lp.style.transition = "opacity 0.35s ease";
-        lp.classList.add("open");
-        
-        // Если прозрачность ВЫКЛЮЧЕНА, локскрин должен плавно исчезнуть
-        if (!isReduceTransparency) {
-            lp.style.opacity = "0";
-        } else {
-            lp.style.opacity = "1";
-        }
+    showPopup_open_close(app);
 
+    // Убираем локскрин
+    lp.style.transition = `all 0.3s ease`;
+    lp.classList.add("open");
+    lp.style.scale = `${scaleAllAppReverse}`;
+
+    // Иконка моментально на весь экран
+    currentOpeningBtn.style.transition = "none";
+    currentOpeningBtn.classList.add("open");
+    currentOpeningBtn.style.scale = "100%";
+    currentOpeningBtn.style.transform = "none";
+
+    wallpaper.style.transition = "none";
+    wallpaper.style.scale = `${scaleWallpaper}%`;
+
+    // Плавное появление контента
+    allApp.style.transition = "opacity 0.3s ease";
+    allApp.style.opacity = "0";
+    allApp.style.scale = `${scaleAllApp}%`;
+
+    requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             allApp.style.opacity = "1";
         });
+    });
 
-        nav.style.height = "40px";
-        isMo = true;
+    nav.style.height = "40px";
+    isMo = true;
 
-        // ВОЗВРАЩАЕМ ВСЕ НАЗАД ПРИ ЗАКРЫТИИ (кнопка Home)
-        nav.addEventListener("click", () => {
-            allApp.style.opacity = "1"; // Сброс прозрачности приложения
-            lp.style.opacity = "0";     // Прячем локскрин
-            document.querySelectorAll('.box').forEach(box => box.style.opacity = "1");
-            wallpaper.style.opacity = "1";
-        }, { once: true });
-
-    } else {
-        originalOpenPopupSafe.apply(this, arguments);
-    }
+    setTimeout(() => {
+        allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+    }, 350);
 };
