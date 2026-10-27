@@ -3430,35 +3430,40 @@ function createRmToggle() {
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
 // ==========================================
-// ТУМБЛЕР "REDUCE TRANSPARENCY" + МГНОВЕННЫЙ ФОН
+// ТУМБЛЕР "REDUCE TRANSPARENCY" + ВЫБОР ЦВЕТА
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
+let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
+// 1. Добавляем CSS с переменной для цвета и отключаем задержки
 const rtStyle = document.createElement('style');
 rtStyle.innerHTML = `
-    /* Серый фон вместо блюра */
+    /* Используем переменную --rt-color для фона */
     body.reduce-transparency .lp {
-        background: #1c1c1e !important; 
+        background: var(--rt-color, #1c1c1e) !important; 
         filter: none !important;        
         backdrop-filter: none !important;
         
-        /* МГНОВЕННОЕ ПОЯВЛЕНИЕ: отключаем плавный переход прозрачности */
-        transition: opacity 0s ease, transform 0s ease !important; 
+        /* ОТКЛЮЧАЕМ ВСЕ ЗАДЕРЖКИ: фон появляется мгновенно */
+        transition: none !important; 
     }
     
     /* Включаем скролл для меню анимаций */
     #app4animation {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        padding-bottom: 80px !important;
+        padding-bottom: 100px !important;
     }
 `;
 document.head.appendChild(rtStyle);
 
+// Применяем сохраненный цвет и класс при загрузке
+document.documentElement.style.setProperty('--rt-color', savedRtColor);
 if (isReduceTransparency) {
     document.body.classList.add('reduce-transparency');
 }
 
+// 2. Вставляем тумблер и палитру цветов ПОД кнопку Blur
 function createTransparencyToggle() {
     const blurToggle = document.getElementById("blurApp");
     
@@ -3468,15 +3473,23 @@ function createTransparencyToggle() {
         const rtHTML = `
             <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
-                <div id="rt_switch" style="width: 50px; height: 30px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
-                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Палитра цветов -->
+                    <input type="color" id="rt_color_picker" value="${savedRtColor}" style="width: 30px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%;">
+                    
+                    <!-- Тумблер -->
+                    <div id="rt_switch" style="width: 50px; height: 30px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    </div>
                 </div>
             </div>
         `;
         
         blurRow.insertAdjacentHTML('afterend', rtHTML);
 
-        document.getElementById("rt_toggle_btn").addEventListener("click", () => {
+        // Обработчик для включения/выключения
+        document.getElementById("rt_switch").addEventListener("click", (e) => {
+            e.stopPropagation(); // Чтобы не срабатывал клик по всей строке
             isReduceTransparency = !isReduceTransparency;
             localStorage.setItem("reduceTransparency", isReduceTransparency);
             
@@ -3485,6 +3498,14 @@ function createTransparencyToggle() {
             sw.firstElementChild.style.left = isReduceTransparency ? '22px' : '2px';
             
             document.body.classList.toggle('reduce-transparency', isReduceTransparency);
+        });
+
+        // Обработчик для смены цвета
+        document.getElementById("rt_color_picker").addEventListener("input", (e) => {
+            const newColor = e.target.value;
+            savedRtColor = newColor;
+            localStorage.setItem("reduceTransparencyColor", newColor);
+            document.documentElement.style.setProperty('--rt-color', newColor);
         });
     }
 }
