@@ -3313,22 +3313,19 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT)
+// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT БЕЗ ЗУМА)
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
 const styleMotion = document.createElement('style');
 styleMotion.innerHTML = `
-    /* Убиваем анимацию зума при закрытии, оставляем только Fade */
-    body.reduce-motion .box,
-    body.reduce-motion .allApp {
-        transition: opacity 0.3s ease, transform 0s !important, scale 0s !important;
+    /* Убираем все плавные переходы размеров у иконок, чтобы они не улетали при закрытии */
+    body.reduce-motion .box {
+        transition: none !important;
     }
-    /* При открытии принудительно на весь экран */
-    body.reduce-motion .box.open,
-    body.reduce-motion .allApp.open {
-        transform: none !important;
-        scale: 100% !important;
+    /* Оставляем плавность только для контента приложения */
+    body.reduce-motion .allApp {
+        transition: opacity 0.3s ease !important;
     }
 `;
 document.head.appendChild(styleMotion);
@@ -3367,15 +3364,16 @@ setInterval(() => {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
+            // Вызываем оригинал, чтобы убрать локскрин
             originalFunc.apply(this, arguments);
 
             if (isReduceMotion) {
-                // Принудительно раскрываем на весь экран
+                // 1. Иконка МГНОВЕННО занимает весь экран (без зума)
                 currentOpeningBtn.style.transition = "none";
                 currentOpeningBtn.style.transform = "none"; 
                 currentOpeningBtn.style.scale = "100%";
 
-                // Контент приложения проявляется
+                // 2. Контент приложения проявляется
                 allApp.style.transition = "opacity 0.3s ease";
                 allApp.style.transform = "none";
                 allApp.style.scale = "100%";
