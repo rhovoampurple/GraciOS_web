@@ -3312,18 +3312,17 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// ТУМБЛЕР "LESS ANIMATIONS" (ФИНАЛЬНАЯ ВЕРСИЯ)
+// ТУМБЛЕР "LESS ANIMATIONS" (ЧИСТЫЙ FADE IN/OUT)
 // ==========================================
-console.log("Скрипт GraciOS: Загрузка тумблера началась...");
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// 1. Добавляем CSS
+// 1. Убираем геометрические анимации для КОНТЕНТА приложения (Fade Out при закрытии)
 const rmStyle = document.createElement('style');
 rmStyle.innerHTML = `
+    /* Отключаем изменения размеров для контейнера приложений и размытия */
     body.reduce-motion .allApp,
-    body.reduce-motion .box,
-    body.reduce-motion .wallpaper {
-        transition: opacity 0.2s ease !important;
+    body.reduce-motion .lp {
+        transition: opacity 0.3s ease !important;
         transform: none !important;
         scale: 100% !important;
         animation: none !important;
@@ -3335,25 +3334,61 @@ if (isReduceMotion) {
     document.body.classList.add('reduce-motion');
 }
 
-// 2. Функция установки тумблера
+// 2. Перехватываем функцию ОТКРЫТИЯ приложения
+const originalOpenPopup = openPopupFromCurrentButton;
+openPopupFromCurrentButton = function() {
+    if (isReduceMotion) {
+        showPopup_open_close(app);
+
+        // А) Иконка приложения мгновенно (без анимации размеров) становится на весь экран
+        currentOpeningBtn.style.transition = "opacity 0.3s ease";
+        currentOpeningBtn.classList.add("open");
+        currentOpeningBtn.style.scale = "100%";
+        currentOpeningBtn.style.transform = "none"; // Отключаем сжатие
+
+        // Б) Контент приложения появляется плавно (Fade In)
+        allApp.style.transition = "opacity 0.3s ease";
+        allApp.style.opacity = "0"; // Начинаем с прозрачности
+        allApp.style.scale = "100%";
+        allApp.style.transform = "none";
+
+        // В) Слой размытия тоже проявляется плавно
+        lp.style.transition = "opacity 0.3s ease";
+        lp.classList.add("open");
+        lp.style.opacity = "0";
+        lp.style.scale = "100%";
+        lp.style.transform = "none";
+
+        // Запускаем плавное проявление
+        requestAnimationFrame(() => {
+            allApp.style.opacity = "1";
+            lp.style.opacity = "1";
+        });
+
+        nav.style.height = "40px";
+        isMo = true;
+    } else {
+        // Если тумблер выключен — работает оригинальная анимация
+        originalOpenPopup.apply(this, arguments);
+    }
+};
+
+// 3. Добавляем сам тумблер в меню
 function createRmToggle() {
     const container = document.getElementById("app4animation");
     
-    // Если контейнер найден и тумблера еще нет
     if (container && !document.getElementById("rm_toggle_btn")) {
         const rmHTML = `
             <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations</span>
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations (Fade)</span>
                 <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
                     <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                 </div>
             </div>
         `;
         
-        // Вставляем в самый конец меню анимаций
         container.insertAdjacentHTML('beforeend', rmHTML);
 
-        // Добавляем клик
         document.getElementById("rm_toggle_btn").addEventListener("click", () => {
             isReduceMotion = !isReduceMotion;
             localStorage.setItem("reduceMotion", isReduceMotion);
@@ -3368,9 +3403,8 @@ function createRmToggle() {
                 document.body.classList.remove('reduce-motion');
             }
         });
-        console.log("Скрипт GraciOS: Тумблер успешно добавлен!");
     }
 }
 
-// 3. Запускаем проверку каждые полсекунды (вдруг меню грузится с задержкой)
+// Запускаем поиск меню при загрузке
 setInterval(createRmToggle, 500);
