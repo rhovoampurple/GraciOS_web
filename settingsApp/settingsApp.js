@@ -1,3 +1,4 @@
+localStorage.clear();
 let duration = 1.7 * currentSpeed;
 
 const AboutInSetting = document.getElementById("about_setting");
