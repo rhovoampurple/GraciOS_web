@@ -3475,3 +3475,118 @@ function createTransparencyToggle() {
     }
 }
 setInterval(createTransparencyToggle, 500);
+// ==========================================
+// HYPEROS 4 ICON ROTATION (РАБОЧАЯ ВЕРСИЯ С ФИКСОМ UI)
+// ==========================================
+let isIconRotation = localStorage.getItem("iconRotation") === "true";
+let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
+
+// CSS для нашего блока, чтобы он не налезал на кнопку reset
+const rotStyle = document.createElement('style');
+rotStyle.innerHTML = `
+    #rot_toggle_wrapper {
+        margin-top: 80px !important; /* Сдвигаем вниз, под кнопку reset */
+        margin-bottom: 30px !important;
+        position: relative !important;
+        z-index: 10 !important;
+        background: white;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+`;
+document.head.appendChild(rotStyle);
+
+function createRotationUI() {
+    const container = document.getElementById("app4AppOpeningAnimation");
+    
+    if (container && !document.getElementById("rot_toggle_wrapper")) {
+        const rotHTML = `
+            <div class="khaysetting" id="rot_toggle_wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #333; font-size: 15px; font-weight: 500;">Icon Rotation</span>
+                    <div id="rot_switch" style="width: 44px; height: 26px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
+                        <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    </div>
+                </div>
+                
+                <div id="rot_slider_wrapper" style="display: ${isIconRotation ? 'block' : 'none'}; margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="color: #666; font-size: 13px;">Angle</span>
+                        <span style="color: #f65268; font-size: 13px; font-weight: bold;" id="rot_angle_val">${iconRotationAngle}°</span>
+                    </div>
+                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', rotHTML);
+
+        document.getElementById("rot_switch").addEventListener("click", () => {
+            isIconRotation = !isIconRotation;
+            localStorage.setItem("iconRotation", isIconRotation);
+            const sw = document.getElementById("rot_switch");
+            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isIconRotation ? '20px' : '2px';
+            document.getElementById("rot_slider_wrapper").style.display = isIconRotation ? 'block' : 'none';
+        });
+
+        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
+            const val = e.target.value;
+            iconRotationAngle = parseInt(val);
+            localStorage.setItem("iconRotationAngle", iconRotationAngle);
+            document.getElementById("rot_angle_val").textContent = `${val}°`;
+        });
+    }
+}
+
+setInterval(createRotationUI, 500);
+
+// ==========================================
+// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°)
+// ==========================================
+let lastOpenPopupRot = null;
+
+setInterval(() => {
+    if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
+        const originalFunc = window.openPopupFromCurrentButton;
+        
+        window.openPopupFromCurrentButton = function() {
+            // Вызываем оригинал для обработки локскрина
+            originalFunc.apply(this, arguments);
+
+            if (isIconRotation) {
+                // Сбрасываем возможное залипание контента
+                allApp.style.transform = "none";
+                currentOpeningBtn.classList.add("open");
+                
+                // Настраиваем плавность для контента
+                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+
+                // Анимация иконки: из 90° (или выбранного угла) в 0° с увеличением
+                currentOpeningBtn.animate([
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'forwards'
+                });
+
+                // Фиксируем конечное положение
+                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+
+                // Настраиваем фон и контент
+                wallpaper.style.scale = `${scaleWallpaper}%`;
+                lp.classList.add("open");
+                lp.style.scale = `${scaleAllAppReverse}`;
+                allApp.style.scale = `${scaleAllApp}%`;
+                
+                nav.style.height = "40px";
+                isMo = true;
+            }
+        };
+        lastOpenPopupRot = window.openPopupFromCurrentButton;
+    }
+}, 300);
