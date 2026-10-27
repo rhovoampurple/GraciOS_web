@@ -532,9 +532,11 @@ function animationCustomByTXT({
 
 // Вызываем функцию с нашими параметрами
 animationCustomByTXT({
+  /* ================= OPEN APP ================= */
   time_allTmp: 0.4, 
-  valScaleApp: 100, 
-  valScaleWallpaper: 100, 
+  valScaleApp: 86, // <--- ВЕРНУЛИ 86 (вместо 100)
+  valScaleWallpaper: 110, // <--- ВЕРНУЛИ 110 (вместо 100)
+  // ... остальное оставляем как есть ...
   cubic_ratioParam: "cubic-bezier(.79,-0.25,.12,.95)", 
   cubic_allParam: "cubic-bezier(.79,-0.25,.12,.95)", 
   timeHidingIconAppTmp: 0.4, 
