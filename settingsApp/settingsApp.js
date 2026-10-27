@@ -3312,14 +3312,12 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЕЗОПАСНЫЙ ТУМБЛЕР "LESS ANIMATIONS" (ТОЛЬКО CSS)
+// БЕЗОПАСНЫЙ ТУМБЛЕР "LESS ANIMATIONS"
 // ==========================================
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-// 1. Добавляем CSS-стили, которые перебивают инлайн-стили JS
 const rmStyle = document.createElement('style');
 rmStyle.innerHTML = `
-    /* Отключаем масштабирование и трансформации для приложений и иконок */
     body.reduce-motion .allApp,
     body.reduce-motion .box,
     body.reduce-motion .wallpaper {
@@ -3327,47 +3325,45 @@ rmStyle.innerHTML = `
         transform: none !important;
         scale: 100% !important;
     }
-    
-    /* Для экрана блокировки (.lp) оставляем transform, чтобы он уезжал, 
-       но ускоряем и делаем прозрачным */
     body.reduce-motion .lp {
         transition: opacity 0.25s ease, transform 0.25s ease !important;
     }
 `;
 document.head.appendChild(rmStyle);
 
-// 2. Применяем класс при загрузке, если тумблер был включен
 if (isReduceMotion) {
     document.body.classList.add('reduce-motion');
 }
 
-// 3. Создаем сам тумблер в меню анимаций
-const animContainer = document.getElementById("app4animation");
-if (animContainer && !document.getElementById("rm_toggle_btn")) {
-    const rmHTML = `
-        <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
-            <span style="color: white; font-size: 16px;">Less animations (Fade)</span>
-            <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#007aff' : '#333'}; border-radius: 15px; position: relative; transition: 0.3s;">
-                <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s;"></div>
+// Ждем полной загрузки страницы, чтобы все элементы точно существовали
+window.addEventListener('load', () => {
+    // Ищем ГЛАВНОЕ меню настроек (app4)
+    const animContainer = document.getElementById("app4");
+    
+    if (animContainer && !document.getElementById("rm_toggle_btn")) {
+        const rmHTML = `
+            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
+                <span style="color: white; font-size: 16px;">Less animations (Fade)</span>
+                <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#007aff' : '#333'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s;"></div>
+                </div>
             </div>
-        </div>
-    `;
-    animContainer.insertAdjacentHTML('beforeend', rmHTML);
+        `;
+        animContainer.insertAdjacentHTML('beforeend', rmHTML);
 
-    document.getElementById("rm_toggle_btn").addEventListener("click", () => {
-        isReduceMotion = !isReduceMotion;
-        localStorage.setItem("reduceMotion", isReduceMotion);
-        
-        // Обновляем внешний вид тумблера
-        const sw = document.getElementById("rm_switch");
-        sw.style.background = isReduceMotion ? '#007aff' : '#333';
-        sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
+        document.getElementById("rm_toggle_btn").addEventListener("click", () => {
+            isReduceMotion = !isReduceMotion;
+            localStorage.setItem("reduceMotion", isReduceMotion);
+            
+            const sw = document.getElementById("rm_switch");
+            sw.style.background = isReduceMotion ? '#007aff' : '#333';
+            sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
 
-        // Включаем/выключаем режим
-        if (isReduceMotion) {
-            document.body.classList.add('reduce-motion');
-        } else {
-            document.body.classList.remove('reduce-motion');
-        }
-    });
-}
+            if (isReduceMotion) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        });
+    }
+});
