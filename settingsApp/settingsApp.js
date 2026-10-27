@@ -3340,3 +3340,91 @@ window.addEventListener('load', () => {
         blurBtn.classList.add("active");
     }
 });
+// ==========================================
+// ФУНКЦИЯ "LESS ANIMATIONS" (Reduce Motion)
+// ==========================================
+let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
+
+// Создаем глобальный CSS-стиль, который перебивает сложные анимации
+const rmStyle = document.createElement('style');
+rmStyle.innerHTML = `
+    body.reduce-motion .box,
+    body.reduce-motion .allApp,
+    body.reduce-motion .lp,
+    body.reduce-motion .wallpaper {
+        transition: opacity 0.25s ease !important;
+        transform: none !important;
+        scale: 100% !important;
+        animation: none !important;
+    }
+`;
+document.head.appendChild(rmStyle);
+
+// Применяем класс при загрузке, если тумблер был включен
+if (isReduceMotion) {
+    document.body.classList.add('reduce-motion');
+}
+
+// Добавляем тумблер в меню настроек анимаций
+const animContainer = document.getElementById("app4animation");
+if (animContainer && !document.getElementById("rm_toggle_btn")) {
+    const rmHTML = `
+        <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+            <span style="color: white; font-size: 16px;">Less animations (Fade)</span>
+            <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#007aff' : '#333'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s;"></div>
+            </div>
+        </div>
+    `;
+    animContainer.insertAdjacentHTML('beforeend', rmHTML);
+
+    document.getElementById("rm_toggle_btn").addEventListener("click", () => {
+        isReduceMotion = !isReduceMotion;
+        localStorage.setItem("reduceMotion", isReduceMotion);
+        
+        // Обновляем внешний вид тумблера
+        const sw = document.getElementById("rm_switch");
+        sw.style.background = isReduceMotion ? '#007aff' : '#333';
+        sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
+
+        // Включаем/выключаем класс на body
+        if (isReduceMotion) {
+            document.body.classList.add('reduce-motion');
+        } else {
+            document.body.classList.remove('reduce-motion');
+        }
+    });
+}
+
+// Перехватываем функцию открытия, чтобы при включенном тумблере
+// приложение просто появлялось (Fade In), а иконки не дергались
+const originalOpenPopup = openPopupFromCurrentButton;
+openPopupFromCurrentButton = function() {
+    if (isReduceMotion) {
+        showPopup_open_close(app);
+        currentOpeningBtn.classList.add("open");
+        
+        // Принудительно ставим прозрачность 0 перед появлением
+        allApp.style.opacity = "0";
+        lp.style.opacity = "0";
+        
+        // Принудительно фиксируем масштабы
+        allApp.style.scale = "100%";
+        wallpaper.style.scale = "100%";
+        lp.style.scale = "100%";
+        currentOpeningBtn.style.transform = "scale(1)";
+        currentOpeningBtn.style.scale = "100%";
+
+        // Плавно проявляем
+        requestAnimationFrame(() => {
+            allApp.style.opacity = "1";
+            lp.classList.add("open");
+        });
+        
+        nav.style.height = "40px";
+        isMo = true;
+    } else {
+        // Если выключено - работает твоя кастомная анимация с пружинками
+        originalOpenPopup.apply(this, arguments);
+    }
+};
