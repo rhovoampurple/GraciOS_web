@@ -423,8 +423,8 @@ if (saved_finger_local == 0) {
   finger_biometrics = box_pass2.classList.contains("off") ? 0 : 1;
 }
 
-let blur_app = 0;
-let blurCustomOpeing = localStorage.getItem("blurAllApp") || 20;
+let blur_app = 1;
+let blurCustomOpeing = localStorage.getItem("blurAllApp") || 30;
 
 function handleBlurAppToggle() {
   blurAppBtn.classList.toggle("active");
