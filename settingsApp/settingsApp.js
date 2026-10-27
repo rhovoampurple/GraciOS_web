@@ -3430,31 +3430,55 @@ function createRmToggle() {
 // Запускаем поиск меню
 setInterval(createRmToggle, 500);
 // ==========================================
-// ТУМБЛЕР "REDUCE TRANSPARENCY" + ВВОД ЦВЕТА
+// ==========================================
+// ТУМБЛЕР "REDUCE TRANSPARENCY" + КОМПАКТНЫЙ UI
 // ==========================================
 let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
 let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
 
 const rtStyle = document.createElement('style');
 rtStyle.innerHTML = `
+    /* Мгновенный серый фон */
     body.reduce-transparency .lp {
         background: var(--rt-color, #1c1c1e) !important; 
         filter: none !important;        
         backdrop-filter: none !important;
         transition: none !important; 
     }
+    
+    /* Уменьшаем интерфейс меню анимаций, чтобы всё влезало */
     #app4animation {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         padding-bottom: 100px !important;
     }
-    /* Стиль для кнопки выбора цвета */
+    
+    /* Делаем все строки настроек чуть компактнее */
+    #app4animation .khaysetting {
+        padding: 10px 12px !important;
+        margin-top: 8px !important;
+    }
+    #app4animation .khaysetting span {
+        font-size: 14px !important; /* Чуть уменьшаем шрифт */
+    }
+
+    /* Стили для нашей новой кнопки цвета */
     .rt-color-btn {
-        width: 30px; height: 30px; 
+        width: 24px; 
+        height: 24px; 
         border-radius: 50%; 
-        border: 2px solid #ccc;
+        border: 2px solid #fff;
+        box-shadow: 0 0 3px rgba(0,0,0,0.3); /* Обводка, чтобы было видно */
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        flex-shrink: 0; /* Запрещаем сжимать кнопку */
+    }
+    
+    /* Контейнер для кнопки и тумблера */
+    .rt-controls {
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+        flex-shrink: 0;
     }
 `;
 document.head.appendChild(rtStyle);
@@ -3471,15 +3495,15 @@ function createTransparencyToggle() {
         const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
         
         const rtHTML = `
-            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 16px; font-weight: 500;">Reduce Transparency</span>
-                <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-weight: 500;">Reduce Transparency</span>
+                <div class="rt-controls">
                     <!-- Кнопка выбора цвета -->
                     <div id="rt_color_btn" class="rt-color-btn" style="background: ${savedRtColor};" title="Изменить цвет"></div>
                     
                     <!-- Тумблер -->
-                    <div id="rt_switch" style="width: 50px; height: 30px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s; cursor: pointer;">
-                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                    <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
+                        <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                     </div>
                 </div>
             </div>
@@ -3494,18 +3518,16 @@ function createTransparencyToggle() {
             
             const sw = document.getElementById("rt_switch");
             sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceTransparency ? '22px' : '2px';
+            sw.firstElementChild.style.left = isReduceTransparency ? '20px' : '2px';
             
             document.body.classList.toggle('reduce-transparency', isReduceTransparency);
         });
 
-        // Обработчик кнопки выбора цвета (через всплывающее окно)
+        // Обработчик кнопки выбора цвета
         document.getElementById("rt_color_btn").addEventListener("click", () => {
-            // Открываем окно ввода с текущим цветом
             const newColor = prompt("Введите HEX-код цвета (например, #1c1c1e):", savedRtColor);
             
             if (newColor && newColor.trim() !== "") {
-                // Проверяем, начинается ли с #, если нет - добавляем
                 let formattedColor = newColor.trim();
                 if (!formattedColor.startsWith("#")) {
                     formattedColor = "#" + formattedColor;
