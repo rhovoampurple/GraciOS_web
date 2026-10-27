@@ -3774,11 +3774,12 @@ function createRotationUI() {
 setInterval(createRotationUI, 500);
 
 // ==========================================
-// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°)
+// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0° БЕЗ ЗАЛИПАНИЙ)
 // ==========================================
 const originalOpenPopupRot = openPopupFromCurrentButton;
 
 openPopupFromCurrentButton = function() {
+    // Если включен Fade — отдаем управление ему
     if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
         originalOpenPopupRot.apply(this, arguments);
         return;
@@ -3786,26 +3787,33 @@ openPopupFromCurrentButton = function() {
 
     if (isIconRotation) {
         showPopup_open_close(app);
-        allApp.style.transform = "none"; // Сброс залипания контента
 
+        // 1. СБРОС ЗАЛИПАНИЯ: принудительно убираем поворот у самого приложения
+        allApp.style.transform = "none";
+
+        // 2. Добавляем класс open, чтобы иконка знала свои финальные размеры
         currentOpeningBtn.classList.add("open");
         
+        // 3. Настраиваем плавность для фона и контента
         allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
         wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
         lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
 
-        // Анимация: от 90° к 0° с одновременным увеличением
+        // 4. Запускаем анимацию иконки через Web Animations API
+        // Начинаем с поворота в 90° и масштаба 1, заканчиваем в 0° и нужном масштабе
         currentOpeningBtn.animate([
             { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
             { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
         ], {
-            duration: time_opening_app * 1000,
-            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-            fill: 'forwards'
+            duration: time_opening_app * 1000, // длительность в миллисекундах
+            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)', // плавное затухание
+            fill: 'forwards' // оставляем иконку в конечном положении
         });
 
+        // 5. Фиксируем финальный стиль иконки, чтобы при закрытии не было рывков
         currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
 
+        // 6. Анимируем остальные элементы
         wallpaper.style.scale = `${scaleWallpaper}%`;
         lp.classList.add("open");
         lp.style.scale = `${scaleAllAppReverse}`;
@@ -3814,6 +3822,7 @@ openPopupFromCurrentButton = function() {
         nav.style.height = "40px";
         isMo = true;
     } else {
+        // Обычная анимация
         originalOpenPopupRot.apply(this, arguments);
     }
 };
