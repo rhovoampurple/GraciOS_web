@@ -3312,19 +3312,19 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (ФИНАЛЬНАЯ ВЕРСИЯ)
+// HYPEROS 4 ROTATION (СТАБИЛЬНАЯ ВЕРСИЯ)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
 // 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС
 function createRotationUI() {
-    // Ищем контейнер подменю "App opening animation"
     const container = document.getElementById("app4AppOpeningAnimation");
     
     if (container && !document.getElementById("rot_ui_container")) {
+        // Добавлен margin-top, чтобы сдвинуть график вниз и не перекрывать ползунок
         const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 10px auto; width: 90%; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; z-index: 10; position: relative;">
+            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-top: 60px; margin-bottom: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; position: relative; z-index: 10;">
                 <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
                     <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                 </div>
@@ -3335,7 +3335,7 @@ function createRotationUI() {
                 </div>
             </div>
         `;
-        // Вставляем в начало контейнера, чтобы не налезало на график
+        // Вставляем в самое начало контейнера
         container.insertAdjacentHTML('afterbegin', rotHTML);
 
         document.getElementById("rot_switch").addEventListener("click", () => {
@@ -3357,50 +3357,44 @@ function createRotationUI() {
         });
     }
 }
-// Запускаем поиск контейнера постоянно, так как он может создаваться динамически
 setInterval(createRotationUI, 500);
 
-// 2. ПЕРЕХВАТ ОТКРЫТИЯ
+// 2. ЛОГИКА ПОВОРОТА ПРИ ОТКРЫТИИ
 const originalOpenRotation = openPopupFromCurrentButton;
 
 openPopupFromCurrentButton = function() {
-    // Сначала оригинальная функция задает стили
+    // Вызываем стоковую функцию
     originalOpenRotation.apply(this, arguments);
 
     if (isIconRotation) {
-        // Перебиваем стандартный transform на наш, с поворотом.
-        // Так как оригинальный код задал transition, браузер сам плавно 
-        // провернет иконку из 90 градусов в 0.
-        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(${scaleAllAppReverse})`;
+        // Сначала ставим иконку в положение 90 градусов
+        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
         
-        // Используем requestAnimationFrame, чтобы браузер успел применить поворот 90 град,
-        // а затем запускаем анимацию в 0 град.
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-            });
-        });
+        // Ждем 10 мс (чтобы браузер запомнил это положение), затем плавно крутим в 0
+        setTimeout(() => {
+            currentOpeningBtn.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+            currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+        }, 10);
     }
 };
 
-// 3. ВОЗВРАТ ПРИ ЗАКРЫТИИ
+// 3. ЛОГИКА ПОВОРОТА ПРИ ЗАКРЫТИИ
 document.addEventListener("click", (e) => {
-    // Если нажата кнопка "Домой" или свайп (эмуляция клика)
+    // Если нажата кнопка Home
     if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
         if (!isIconRotation) return;
 
-        // Находим иконку, которая сейчас открыта
         const openBox = document.querySelector('.box.open');
         if (openBox) {
-            // Запускаем анимацию обратно в 90 градусов
-            openBox.animate([
-                { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
-                { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
-            ], {
-                duration: 300, // Чуть быстрее закрытие
-                easing: 'ease-out',
-                fill: 'none' // НЕ фиксируем стили, чтобы не сломать локскрин!
-            });
+            // Возвращаем иконку в повернутое состояние
+            openBox.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+            openBox.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+            
+            // После завершения анимации убираем стили, чтобы не сломать локскрин
+            setTimeout(() => {
+                openBox.style.transform = "";
+                openBox.style.transition = "";
+            }, time_opening_app * 1000);
         }
     }
 });
