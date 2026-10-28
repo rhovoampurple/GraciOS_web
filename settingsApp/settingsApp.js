@@ -3312,12 +3312,13 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (ПОЛНАЯ БЕЗОПАСНАЯ ВЕРСИЯ)
+// HYPEROS 4 ROTATION (ИДЕАЛЬНЫЙ ГИБРИД)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
+let openAnim = null; // Храним анимацию, чтобы отменять её при закрытии
 
-// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС (Тумблер и ползунок)
+// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС ПОД КНОПКУ RESET
 function createRotationUI() {
     const resetBtn = document.getElementById("reset_anim_open_app_btn");
     
@@ -3357,7 +3358,7 @@ function createRotationUI() {
 }
 setInterval(createRotationUI, 500);
 
-// 2. ЛОГИКА ОТКРЫТИЯ (Плавный CSS Transition)
+// 2. ЛОГИКА ОТКРЫТИЯ (Твой идеальный код)
 let lastOpenPopupRot = null;
 
 setInterval(() => {
@@ -3365,67 +3366,87 @@ setInterval(() => {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
-            originalFunc.apply(this, arguments);
+            // Если включен Fade — отдаем управление ему
+            if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
+                originalFunc.apply(this, arguments);
+                return;
+            }
 
-            if (isIconRotation && currentOpeningBtn) {
-                // Помечаем, что эта иконка открыта с поворотом (для наблюдателя)
+            if (isIconRotation) {
+                showPopup_open_close(app);
+
+                // Сброс залипания контента
+                allApp.style.transform = "none";
+                currentOpeningBtn.classList.add("open");
                 currentOpeningBtn.setAttribute("data-rotating", "true");
-                
-                // Мгновенно ставим 90 градусов
-                currentOpeningBtn.style.transition = "none";
-                currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
-                
-                // Форсируем перерисовку
-                void currentOpeningBtn.offsetWidth;
-                
-                // Плавно крутим в 0 градусов и растягиваем
-                currentOpeningBtn.style.transition = `all ${time_opening_app}s ${cubic_all}, aspect-ratio ${time_aspect_ratio_app}s ${cubic_ratio}`;
+
+                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
+
+                // Отменяем предыдущую анимацию, если она была
+                if (openAnim) openAnim.cancel();
+
+                // Запускаем анимацию иконки
+                openAnim = currentOpeningBtn.animate([
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'forwards'
+                });
+
                 currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+
+                wallpaper.style.scale = `${scaleWallpaper}%`;
+                lp.classList.add("open");
+                lp.style.scale = `${scaleAllAppReverse}`;
+                allApp.style.scale = `${scaleAllApp}%`;
+                
+                nav.style.height = "40px";
+                isMo = true;
+            } else {
+                originalFunc.apply(this, arguments);
             }
         };
         lastOpenPopupRot = window.openPopupFromCurrentButton;
     }
 }, 100);
 
-// 3. ЛОГИКА ЗАКРЫТИЯ (Безопасная очистка)
-const rotCloseObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-            const box = mutation.target;
-            
-            // Если класс open пропал (приложение закрывается)
-            if (!box.classList.contains('open') && box.getAttribute("data-rotating") === "true") {
-                box.removeAttribute("data-rotating");
-                
-                // Фиксируем текущее положение
-                const currentTransform = window.getComputedStyle(box).transform;
-                box.style.transition = "none";
-                box.style.transform = currentTransform;
-                void box.offsetWidth;
-                
-                // Запускаем обратный поворот в 90 градусов
-                box.style.transition = `transform ${time_opening_app}s ${cubic_all}`;
-                box.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
-                
-                // Функция очистки стилей, чтобы не сломать локскрин
-                const cleanUpStyles = () => {
-                    box.style.transform = "";
-                    box.style.transition = "";
-                };
-                
-                // Очищаем через время анимации ИЛИ при любом клике (например, для блокировки экрана)
-                setTimeout(cleanUpStyles, time_opening_app * 1000 + 50);
-                document.addEventListener("click", cleanUpStyles, { once: true });
-            }
-        }
-    });
-});
+// 3. ЛОГИКА ЗАКРЫТИЯ (Безопасный возврат)
+document.addEventListener("click", (e) => {
+    // Если нажата кнопка Домой (закрытие)
+    if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
+        const openBox = document.querySelector('.box.open[data-rotating="true"]');
+        
+        if (openBox && isIconRotation) {
+            openBox.removeAttribute("data-rotating");
 
-// Начинаем следить за иконками
-window.addEventListener('load', () => {
-    setInterval(() => {
-        document.querySelectorAll('.box').forEach(box => {
-            rotCloseObserver.observe(box, { attributes: true, attributeFilter: ['class'] });
-        });
-    }, 1000);
+            // Отменяем "замороженную" анимацию открытия
+            if (openAnim) {
+                openAnim.cancel();
+                openAnim = null;
+            }
+
+            // Сбрасываем инлайн-стили, чтобы анимация закрытия началась корректно
+            openBox.style.transform = "";
+
+            // Запускаем обратную анимацию (в 90 градусов)
+            openBox.animate([
+                { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
+                { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
+            ], {
+                duration: time_opening_app * 1000,
+                easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                fill: 'none' // НЕ фиксируем стили после закрытия
+            });
+
+            // Очищаем стили, чтобы не сломать экран блокировки
+            setTimeout(() => {
+                openBox.style.transform = "";
+                openBox.style.transition = "";
+            }, time_opening_app * 1000);
+        }
+    }
 });
