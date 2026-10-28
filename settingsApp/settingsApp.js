@@ -3312,30 +3312,26 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (ИСПРАВЛЕННЫЙ UI И ЗАЩИТА)
+// HYPEROS 4 ROTATION (ИДЕАЛЬНАЯ ПЛАВНОСТЬ)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
-// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС ПОД КНОПКУ RESET
+// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС (Оставляем как было)
 function createRotationUI() {
     const resetBtn = document.getElementById("reset_anim_open_app_btn");
-    
-    // Вставляем только если нашли кнопку reset и нашего блока еще нет
     if (resetBtn && !document.getElementById("rot_ui_container")) {
         const rotHTML = `
             <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 15px auto; width: 90%; max-width: 350px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; position: relative; z-index: 10;">
                 <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
                     <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                 </div>
-                
                 <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
                     <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
                     <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
                 </div>
             </div>
         `;
-        // Вставляем СРАЗУ ПОСЛЕ кнопки reset
         resetBtn.insertAdjacentHTML('afterend', rotHTML);
 
         document.getElementById("rot_switch").addEventListener("click", () => {
@@ -3359,30 +3355,60 @@ function createRotationUI() {
 }
 setInterval(createRotationUI, 500);
 
-// 2. ЛОГИКА ПОВОРОТА (ЗАЩИТА ОТ ПЕРЕЗАПИСИ)
+// 2. ЛОГИКА ОТКРЫТИЯ (Чистый CSS Transition)
 let lastOpenPopupRot = null;
 
-// Проверяем каждые 100мс, не перезаписал ли сайт функцию открытия
 setInterval(() => {
     if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
-            // Вызываем оригинальную функцию, чтобы она сделала всю работу
+            // 1. Вызываем оригинальную функцию (она задает свои стили и transition)
             originalFunc.apply(this, arguments);
 
-            // Если тумблер включен, добавляем анимацию поворота
-            if (isIconRotation) {
-                currentOpeningBtn.animate([
-                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
-                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
-                ], {
-                    duration: time_opening_app * 1000,
-                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                    fill: 'none' // Не оставляем следов, чтобы не сломать закрытие
-                });
+            // 2. Если включен поворот, перебиваем анимацию
+            if (isIconRotation && currentOpeningBtn) {
+                // Мгновенно ставим иконку в положение 90° (без плавности)
+                currentOpeningBtn.style.transition = "none";
+                currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+                
+                // Заставляем браузер "запомнить" это положение
+                void currentOpeningBtn.offsetWidth;
+
+                // Включаем плавность обратно и крутим в 0°
+                // Мы используем те же переменные времени и кривой, что и оригинал
+                currentOpeningBtn.style.transition = `all ${time_opening_app}s ${cubic_all}, aspect-ratio ${time_aspect_ratio_app}s ${cubic_ratio}`;
+                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
             }
         };
         lastOpenPopupRot = window.openPopupFromCurrentButton;
     }
 }, 100);
+
+// 3. ЛОГИКА ЗАКРЫТИЯ (Безопасный возврат)
+let closeTimeout = null;
+document.addEventListener("click", (e) => {
+    // Если нажата кнопка Home
+    if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
+        const openBox = document.querySelector('.box.open');
+        
+        if (openBox && isIconRotation) {
+            if (closeTimeout) clearTimeout(closeTimeout);
+            
+            // Мгновенно ставим в положение 0° (на весь экран)
+            openBox.style.transition = "none";
+            openBox.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+            void openBox.offsetWidth;
+
+            // Плавно возвращаем в 90° и обычный размер
+            openBox.style.transition = `all ${time_opening_app}s ${cubic_all}`;
+            openBox.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+            
+            // Очищаем стили после завершения, чтобы не сломать локскрин
+            closeTimeout = setTimeout(() => {
+                openBox.style.transform = "";
+                openBox.style.transition = "";
+            }, time_opening_app * 1000);
+        }
+    }
+});
