@@ -3312,19 +3312,19 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (СТАБИЛЬНАЯ ВЕРСИЯ)
+// HYPEROS 4 ROTATION (ИСПРАВЛЕННЫЙ UI И ЗАЩИТА)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
-// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС
+// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС ПОД КНОПКУ RESET
 function createRotationUI() {
-    const container = document.getElementById("app4AppOpeningAnimation");
+    const resetBtn = document.getElementById("reset_anim_open_app_btn");
     
-    if (container && !document.getElementById("rot_ui_container")) {
-        // Добавлен margin-top, чтобы сдвинуть график вниз и не перекрывать ползунок
+    // Вставляем только если нашли кнопку reset и нашего блока еще нет
+    if (resetBtn && !document.getElementById("rot_ui_container")) {
         const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-top: 60px; margin-bottom: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; position: relative; z-index: 10;">
+            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 15px auto; width: 90%; max-width: 350px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; position: relative; z-index: 10;">
                 <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
                     <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                 </div>
@@ -3335,8 +3335,8 @@ function createRotationUI() {
                 </div>
             </div>
         `;
-        // Вставляем в самое начало контейнера
-        container.insertAdjacentHTML('afterbegin', rotHTML);
+        // Вставляем СРАЗУ ПОСЛЕ кнопки reset
+        resetBtn.insertAdjacentHTML('afterend', rotHTML);
 
         document.getElementById("rot_switch").addEventListener("click", () => {
             isIconRotation = !isIconRotation;
@@ -3359,42 +3359,30 @@ function createRotationUI() {
 }
 setInterval(createRotationUI, 500);
 
-// 2. ЛОГИКА ПОВОРОТА ПРИ ОТКРЫТИИ
-const originalOpenRotation = openPopupFromCurrentButton;
+// 2. ЛОГИКА ПОВОРОТА (ЗАЩИТА ОТ ПЕРЕЗАПИСИ)
+let lastOpenPopupRot = null;
 
-openPopupFromCurrentButton = function() {
-    // Вызываем стоковую функцию
-    originalOpenRotation.apply(this, arguments);
-
-    if (isIconRotation) {
-        // Сначала ставим иконку в положение 90 градусов
-        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+// Проверяем каждые 100мс, не перезаписал ли сайт функцию открытия
+setInterval(() => {
+    if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
+        const originalFunc = window.openPopupFromCurrentButton;
         
-        // Ждем 10 мс (чтобы браузер запомнил это положение), затем плавно крутим в 0
-        setTimeout(() => {
-            currentOpeningBtn.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-            currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-        }, 10);
-    }
-};
+        window.openPopupFromCurrentButton = function() {
+            // Вызываем оригинальную функцию, чтобы она сделала всю работу
+            originalFunc.apply(this, arguments);
 
-// 3. ЛОГИКА ПОВОРОТА ПРИ ЗАКРЫТИИ
-document.addEventListener("click", (e) => {
-    // Если нажата кнопка Home
-    if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
-        if (!isIconRotation) return;
-
-        const openBox = document.querySelector('.box.open');
-        if (openBox) {
-            // Возвращаем иконку в повернутое состояние
-            openBox.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-            openBox.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
-            
-            // После завершения анимации убираем стили, чтобы не сломать локскрин
-            setTimeout(() => {
-                openBox.style.transform = "";
-                openBox.style.transition = "";
-            }, time_opening_app * 1000);
-        }
+            // Если тумблер включен, добавляем анимацию поворота
+            if (isIconRotation) {
+                currentOpeningBtn.animate([
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'none' // Не оставляем следов, чтобы не сломать закрытие
+                });
+            }
+        };
+        lastOpenPopupRot = window.openPopupFromCurrentButton;
     }
-});
+}, 100);
