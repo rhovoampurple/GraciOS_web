@@ -1,4 +1,3 @@
-localStorage.clear();
 let duration = 1.7 * currentSpeed;
 
 const AboutInSetting = document.getElementById("about_setting");
@@ -29,7 +28,7 @@ const back5 = document.getElementById("back_to_setting5");
 
 const lock_btn = document.getElementById("lock-btn");
 const back6 = document.getElementById("back_to_setting6");
-target.innerText += " ga";
+// target.innerText += " ga";
 const lock_option = document.getElementById("app4lock");
 const wallpaper_btn2 = document.querySelector(".wallpaper-btn-2");
 
@@ -86,7 +85,7 @@ function showPopup_open_close(target, mode = "flex", className = "open") {
   });
 }
 
-target.innerText += "lax";
+// target.innerText += "lax";
 
 function hidePopup_open_close(target, mode = "none", className = "open") {
   const el =
@@ -913,7 +912,7 @@ const colorCircles = document.querySelectorAll(".color-circle");
 const customColorBtn = document.getElementById("customColor");
 const colorPicker = document.getElementById("colorPicker");
 const sizeSlider = document.getElementById("sizeSlider");
-target.innerText += "yA";
+// target.innerText += "yA";
 const date_preview = document.getElementById("dateTextPreview");
 const button_decor = document.getElementById("button_decor");
 
@@ -1669,7 +1668,7 @@ function handle_color_circle2(e) {
   }
 }
 
-target.innerText += "15";
+// target.innerText += "15"; HEEEREEEEEEEEEEEE
 
 function showHomeApp() {
   showPopup_open_close(app4_home);
@@ -3313,589 +3312,65 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// БЛОК 2: LESS ANIMATIONS (FADE IN/OUT БЕЗ ЗУМА И ВЫЛЕТОВ)
+// ТУМБЛЕР "LESS ANIMATIONS" (ФИНАЛЬНАЯ ВЕРСИЯ)
 // ==========================================
+console.log("Скрипт GraciOS: Загрузка тумблера началась...");
 let isReduceMotion = localStorage.getItem("reduceMotion") === "true";
 
-const styleMotion = document.createElement('style');
-styleMotion.innerHTML = `
-    /* Анимация закрытия: держим на весь экран, плавно убираем прозрачность */
-    @keyframes fadeOutMotion {
-        0% { opacity: 1; transform: none !important; scale: 100% !important; }
-        99% { opacity: 0; transform: none !important; scale: 100% !important; }
-        100% { opacity: 0; transform: none !important; scale: 100% !important; }
-    }
-    
-    /* Применяем анимацию ТОЛЬКО когда приложение закрывается (теряет класс open) */
-    body.reduce-motion .box.was-open:not(.open) {
-        animation: fadeOutMotion 0.3s ease forwards !important;
-        pointer-events: none !important;
-    }
-    
-    /* Оставляем плавность только для контента приложения */
-    body.reduce-motion .allApp {
-        transition: opacity 0.3s ease !important;
+// 1. Добавляем CSS
+const rmStyle = document.createElement('style');
+rmStyle.innerHTML = `
+    body.reduce-motion .allApp,
+    body.reduce-motion .box,
+    body.reduce-motion .wallpaper {
+        transition: opacity 0.2s ease !important;
+        transform: none !important;
+        scale: 100% !important;
+        animation: none !important;
     }
 `;
-document.head.appendChild(styleMotion);
+document.head.appendChild(rmStyle);
 
-function createMotionToggle() {
-    const blurToggle = document.getElementById("blurApp");
-    if (blurToggle && !document.getElementById("rm_toggle_btn")) {
-        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
-        
+if (isReduceMotion) {
+    document.body.classList.add('reduce-motion');
+}
+
+// 2. Функция установки тумблера
+function createRmToggle() {
+    const container = document.getElementById("app4animation");
+
+    // Если контейнер найден и тумблера еще нет
+    if (container && !document.getElementById("rm_toggle_btn")) {
         const rmHTML = `
-            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 15px; font-weight: 500;">Less animations (Fade)</span>
-                <div id="rm_switch" style="width: 44px; height: 26px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
-                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+            <div class="khaysetting" id="rm_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-top: 10px; background: white; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <span style="color: #333; font-size: 16px; font-weight: 500;">Less animations</span>
+                <div id="rm_switch" style="width: 50px; height: 30px; background: ${isReduceMotion ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s;">
+                    <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceMotion ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
                 </div>
             </div>
         `;
-        blurRow.insertAdjacentHTML('afterend', rmHTML);
 
-        document.getElementById("rm_switch").addEventListener("click", () => {
+        // Вставляем в самый конец меню анимаций
+        container.insertAdjacentHTML('beforeend', rmHTML);
+
+        // Добавляем клик
+        document.getElementById("rm_toggle_btn").addEventListener("click", () => {
             isReduceMotion = !isReduceMotion;
             localStorage.setItem("reduceMotion", isReduceMotion);
+
             const sw = document.getElementById("rm_switch");
             sw.style.background = isReduceMotion ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceMotion ? '20px' : '2px';
-        });
-    }
-}
-setInterval(createMotionToggle, 500);
-
-// Защита от перезаписи оригинальным кодом
-let lastOpenPopupFunc = null;
-
-setInterval(() => {
-    if (window.openPopupFromCurrentButton !== lastOpenPopupFunc) {
-        const originalFunc = window.openPopupFromCurrentButton;
-        
-        window.openPopupFromCurrentButton = function() {
-            originalFunc.apply(this, arguments);
+            sw.firstElementChild.style.left = isReduceMotion ? '22px' : '2px';
 
             if (isReduceMotion) {
-                // Добавляем класс, чтобы CSS знал, что приложение было открыто
-                currentOpeningBtn.classList.add("was-open");
-
-                // 1. Иконка МГНОВЕННО занимает весь экран
-                currentOpeningBtn.style.transition = "none";
-                currentOpeningBtn.style.transform = "none"; 
-                currentOpeningBtn.style.scale = "100%";
-                currentOpeningBtn.style.opacity = "1";
-
-                // 2. Контент приложения проявляется
-                allApp.style.transition = "none";
-                allApp.style.transform = "none";
-                allApp.style.scale = "100%";
-                allApp.style.opacity = "0";
-
-                requestAnimationFrame(() => {
-                    allApp.style.transition = "opacity 0.3s ease";
-                    allApp.style.opacity = "1";
-                });
-            }
-        };
-        lastOpenPopupFunc = window.openPopupFromCurrentButton;
-    }
-}, 300);
-
-// Очистка после закрытия: возвращаем иконке нормальный вид
-document.addEventListener("animationend", (e) => {
-    if (e.animationName === "fadeOutMotion") {
-        e.target.classList.remove("was-open");
-        e.target.style.opacity = ""; // Убираем прозрачность, чтобы иконка снова стала видимой
-    }
-});
-// ==========================================
-// БЛОК 1: REDUCE TRANSPARENCY (МГНОВЕННЫЙ ФОН)
-// ==========================================
-let isReduceTransparency = localStorage.getItem("reduceTransparency") === "true";
-let savedRtColor = localStorage.getItem("reduceTransparencyColor") || "#1c1c1e";
-
-const styleTransparency = document.createElement('style');
-styleTransparency.innerHTML = `
-    /* Серый фон */
-    body.reduce-transparency .lp {
-        background: var(--rt-color, #1c1c1e) !important; 
-        filter: none !important;        
-        backdrop-filter: none !important;
-    }
-    /* МГНОВЕННОЕ ПОЯВЛЕНИЕ: отключаем плавность прозрачности */
-    body.reduce-transparency .lp.open {
-        transition: transform 0.3s ease, opacity 0s !important;
-        opacity: 1 !important;
-    }
-    .lp:not(.open) { pointer-events: none !important; }
-`;
-document.head.appendChild(styleTransparency);
-
-document.documentElement.style.setProperty('--rt-color', savedRtColor);
-if (isReduceTransparency) document.body.classList.add('reduce-transparency');
-
-function createTransparencyToggle() {
-    const blurToggle = document.getElementById("blurApp");
-    if (blurToggle && !document.getElementById("rt_toggle_btn")) {
-        const blurRow = blurToggle.closest('.khaysetting') || blurToggle.parentElement;
-        
-        const rtHTML = `
-            <div class="khaysetting" id="rt_toggle_btn" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 8px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color: #333; font-size: 15px; font-weight: 500;">Reduce Transparency</span>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div id="rt_color_btn" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.3); background: ${savedRtColor}; cursor: pointer;"></div>
-                    <div id="rt_switch" style="width: 44px; height: 26px; background: ${isReduceTransparency ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
-                        <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isReduceTransparency ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        blurRow.insertAdjacentHTML('afterend', rtHTML);
-
-        document.getElementById("rt_switch").addEventListener("click", () => {
-            isReduceTransparency = !isReduceTransparency;
-            localStorage.setItem("reduceTransparency", isReduceTransparency);
-            const sw = document.getElementById("rt_switch");
-            sw.style.background = isReduceTransparency ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isReduceTransparency ? '20px' : '2px';
-            document.body.classList.toggle('reduce-transparency', isReduceTransparency);
-        });
-
-        document.getElementById("rt_color_btn").addEventListener("click", () => {
-            const newColor = prompt("Введите HEX-код цвета:", savedRtColor);
-            if (newColor && newColor.trim() !== "") {
-                let formattedColor = newColor.trim();
-                if (!formattedColor.startsWith("#")) formattedColor = "#" + formattedColor;
-                savedRtColor = formattedColor;
-                localStorage.setItem("reduceTransparencyColor", newColor);
-                document.documentElement.style.setProperty('--rt-color', newColor);
-                document.getElementById("rt_color_btn").style.background = newColor;
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
             }
         });
-    }
-}
-setInterval(createTransparencyToggle, 500);
-// ==========================================
-// HYPEROS 4 ICON ROTATION (РАБОЧАЯ ВЕРСИЯ С ФИКСОМ UI)
-// ==========================================
-let isIconRotation = localStorage.getItem("iconRotation") === "true";
-let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
-
-// CSS для нашего блока, чтобы он не налезал на кнопку reset
-const rotStyle = document.createElement('style');
-rotStyle.innerHTML = `
-    #rot_toggle_wrapper {
-        margin-top: 80px !important; /* Сдвигаем вниз, под кнопку reset */
-        margin-bottom: 30px !important;
-        position: relative !important;
-        z-index: 10 !important;
-        background: white;
-        border-radius: 10px;
-        padding: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-`;
-document.head.appendChild(rotStyle);
-
-function createRotationUI() {
-    const container = document.getElementById("app4AppOpeningAnimation");
-    
-    if (container && !document.getElementById("rot_toggle_wrapper")) {
-        const rotHTML = `
-            <div class="khaysetting" id="rot_toggle_wrapper">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #333; font-size: 15px; font-weight: 500;">Icon Rotation</span>
-                    <div id="rot_switch" style="width: 44px; height: 26px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 13px; position: relative; transition: 0.3s; cursor: pointer;">
-                        <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '20px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                    </div>
-                </div>
-                
-                <div id="rot_slider_wrapper" style="display: ${isIconRotation ? 'block' : 'none'}; margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #666; font-size: 13px;">Angle</span>
-                        <span style="color: #f65268; font-size: 13px; font-weight: bold;" id="rot_angle_val">${iconRotationAngle}°</span>
-                    </div>
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                </div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', rotHTML);
-
-        document.getElementById("rot_switch").addEventListener("click", () => {
-            isIconRotation = !isIconRotation;
-            localStorage.setItem("iconRotation", isIconRotation);
-            const sw = document.getElementById("rot_switch");
-            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '20px' : '2px';
-            document.getElementById("rot_slider_wrapper").style.display = isIconRotation ? 'block' : 'none';
-        });
-
-        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
-            localStorage.setItem("iconRotationAngle", iconRotationAngle);
-            document.getElementById("rot_angle_val").textContent = `${val}°`;
-        });
+        console.log("Скрипт GraciOS: Тумблер успешно добавлен!");
     }
 }
 
-setInterval(createRotationUI, 500);
-
-// ==========================================
-// HYPEROS 4 ICON ROTATION (КОМПАКТНЫЙ UI)
-// ==========================================
-let isIconRotation = localStorage.getItem("iconRotation") === "true";
-let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
-
-function createRotationUI() {
-    // Ищем тумблер "Parallel animation", чтобы вставить наш блок прямо перед ним
-    const parallelToggle = document.getElementById("parallelAnimationToggle");
-    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
-    
-    if (parallelRow && !document.getElementById("rot_ui_container")) {
-        const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
-                <!-- Маленький тумблер слева -->
-                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
-                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
-                </div>
-                
-                <!-- Ползунок и градусы справа -->
-                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
-                </div>
-            </div>
-        `;
-        
-        // Вставляем прямо перед строкой "Parallel animation"
-        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
-
-        // Обработчик тумблера
-        document.getElementById("rot_switch").addEventListener("click", () => {
-            isIconRotation = !isIconRotation;
-            localStorage.setItem("iconRotation", isIconRotation);
-            
-            const sw = document.getElementById("rot_switch");
-            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
-            
-            // Делаем ползунок активным/неактивным
-            const wrapper = document.getElementById("rot_slider_wrapper");
-            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
-            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
-        });
-
-        // Обработчик ползунка
-        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
-            localStorage.setItem("iconRotationAngle", iconRotationAngle);
-            document.getElementById("rot_angle_val").textContent = `${val}°`;
-        });
-    }
-}
-
-setInterval(createRotationUI, 500);
-
-// ==========================================
-// HYPEROS 4 ICON ROTATION (ОТКРЫТИЕ + ЗАКРЫТИЕ)
-// ==========================================
-let isIconRotation = localStorage.getItem("iconRotation") === "true";
-let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
-
-function createRotationUI() {
-    const parallelToggle = document.getElementById("parallelAnimationToggle");
-    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
-    
-    if (parallelRow && !document.getElementById("rot_ui_container")) {
-        const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
-                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
-                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
-                </div>
-                
-                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
-                </div>
-            </div>
-        `;
-        
-        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
-
-        document.getElementById("rot_switch").addEventListener("click", () => {
-            isIconRotation = !isIconRotation;
-            localStorage.setItem("iconRotation", isIconRotation);
-            
-            const sw = document.getElementById("rot_switch");
-            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
-            
-            const wrapper = document.getElementById("rot_slider_wrapper");
-            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
-            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
-        });
-
-        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
-            localStorage.setItem("iconRotationAngle", iconRotationAngle);
-            document.getElementById("rot_angle_val").textContent = `${val}°`;
-        });
-    }
-}
-
-setInterval(createRotationUI, 500);
-
-// ==========================================
-// ПЕРЕХВАТ ОТКРЫТИЯ (С ПОВОРОТОМ)
-// ==========================================
-let lastOpenPopupRot = null;
-
-setInterval(() => {
-    if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
-        const originalFunc = window.openPopupFromCurrentButton;
-        
-        window.openPopupFromCurrentButton = function() {
-            originalFunc.apply(this, arguments);
-
-            if (isIconRotation) {
-                // Помечаем иконку, что она открыта с поворотом
-                currentOpeningBtn.setAttribute("data-rotating", "true");
-
-                allApp.style.transform = "none";
-                currentOpeningBtn.classList.add("open");
-                
-                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-
-                currentOpeningBtn.animate([
-                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
-                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
-                ], {
-                    duration: time_opening_app * 1000,
-                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                    fill: 'forwards'
-                });
-
-                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-
-                wallpaper.style.scale = `${scaleWallpaper}%`;
-                lp.classList.add("open");
-                lp.style.scale = `${scaleAllAppReverse}`;
-                allApp.style.scale = `${scaleAllApp}%`;
-                
-                nav.style.height = "40px";
-                isMo = true;
-            }
-        };
-        lastOpenPopupRot = window.openPopupFromCurrentButton;
-    }
-}, 300);
-
-// ==========================================
-// HYPEROS 4 ICON ROTATION (КОМПАКТНЫЙ UI)
-// ==========================================
-let isIconRotation = localStorage.getItem("iconRotation") === "true";
-let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
-
-function createRotationUI() {
-    // Ищем тумблер "Parallel animation", чтобы вставить наш блок прямо перед ним
-    const parallelToggle = document.getElementById("parallelAnimationToggle");
-    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
-    
-    if (parallelRow && !document.getElementById("rot_ui_container")) {
-        const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
-                <!-- Маленький тумблер слева -->
-                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
-                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
-                </div>
-                
-                <!-- Ползунок и градусы справа -->
-                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
-                </div>
-            </div>
-        `;
-        
-        // Вставляем прямо перед строкой "Parallel animation"
-        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
-
-        // Обработчик тумблера
-        document.getElementById("rot_switch").addEventListener("click", () => {
-            isIconRotation = !isIconRotation;
-            localStorage.setItem("iconRotation", isIconRotation);
-            
-            const sw = document.getElementById("rot_switch");
-            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
-            
-            // Делаем ползунок активным/неактивным
-            const wrapper = document.getElementById("rot_slider_wrapper");
-            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
-            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
-        });
-
-        // Обработчик ползунка
-        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
-            localStorage.setItem("iconRotationAngle", iconRotationAngle);
-            document.getElementById("rot_angle_val").textContent = `${val}°`;
-        });
-    }
-}
-
-setInterval(createRotationUI, 500);
-
-// ==========================================
-// HYPEROS 4 ICON ROTATION (БЕЗОПАСНАЯ ВЕРСИЯ)
-// ==========================================
-let isIconRotation = localStorage.getItem("iconRotation") === "true";
-let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
-let openAnim = null; // Переменная для хранения текущей анимации
-
-function createRotationUI() {
-    const parallelToggle = document.getElementById("parallelAnimationToggle");
-    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
-    
-    if (parallelRow && !document.getElementById("rot_ui_container")) {
-        const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
-                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
-                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
-                </div>
-                
-                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
-                </div>
-            </div>
-        `;
-        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
-
-        document.getElementById("rot_switch").addEventListener("click", () => {
-            isIconRotation = !isIconRotation;
-            localStorage.setItem("iconRotation", isIconRotation);
-            
-            const sw = document.getElementById("rot_switch");
-            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
-            
-            const wrapper = document.getElementById("rot_slider_wrapper");
-            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
-            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
-        });
-
-        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
-            localStorage.setItem("iconRotationAngle", iconRotationAngle);
-            document.getElementById("rot_angle_val").textContent = `${val}°`;
-        });
-    }
-}
-setInterval(createRotationUI, 500);
-
-// ==========================================
-// ПЕРЕХВАТ ОТКРЫТИЯ
-// ==========================================
-let lastOpenPopupRot = null;
-
-setInterval(() => {
-    if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
-        const originalFunc = window.openPopupFromCurrentButton;
-        
-        window.openPopupFromCurrentButton = function() {
-            originalFunc.apply(this, arguments);
-
-            if (isIconRotation) {
-                // Сбрасываем прошлую анимацию, если она была
-                if (openAnim) { openAnim.cancel(); openAnim = null; }
-
-                // Помечаем иконку, что она открыта с поворотом
-                currentOpeningBtn.setAttribute("data-rotating", "true");
-                currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
-
-                allApp.style.transform = "none";
-                currentOpeningBtn.classList.add("open");
-                
-                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-
-                // Запускаем анимацию и сохраняем её в переменную
-                openAnim = currentOpeningBtn.animate([
-                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
-                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
-                ], {
-                    duration: time_opening_app * 1000,
-                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                    fill: 'forwards'
-                });
-
-                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-
-                wallpaper.style.scale = `${scaleWallpaper}%`;
-                lp.classList.add("open");
-                lp.style.scale = `${scaleAllAppReverse}`;
-                allApp.style.scale = `${scaleAllApp}%`;
-                
-                nav.style.height = "40px";
-                isMo = true;
-            }
-        };
-        lastOpenPopupRot = window.openPopupFromCurrentButton;
-    }
-}, 300);
-
-// ==========================================
-// АНИМАЦИЯ ЗАКРЫТИЯ + ФИКС ЛОКСКРИНА
-// ==========================================
-const rotObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-            const box = mutation.target;
-            if (!box.classList.contains('open') && box.getAttribute('data-rotating') === 'true') {
-                box.removeAttribute('data-rotating');
-
-                // 1. ОТМЕНЯЕМ анимацию открытия, чтобы освободить стили для сайта
-                if (openAnim) { openAnim.cancel(); openAnim = null; }
-
-                // 2. Запускаем анимацию закрытия (из 0° в 90°)
-                const closeAnim = box.animate([
-                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
-                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
-                ], {
-                    duration: time_opening_app * 1000,
-                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                    fill: 'none' // Не фиксируем стили, пусть сайт делает свою работу
-                });
-
-                // 3. После завершения полностью очищаем стили и принудительно чиним локскрин
-                closeAnim.onfinish = () => {
-                    box.style.transform = "";
-                    box.style.scale = "";
-                    
-                    // Фикс залипания экрана блокировки
-                    if (typeof lp !== 'undefined') {
-                        lp.style.transition = "all 0.3s ease";
-                        lp.style.scale = "1";
-                        lp.style.opacity = "1";
-                    }
-                };
-            }
-        }
-    });
-});
-
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        document.querySelectorAll('.box').forEach(box => {
-            rotObserver.observe(box, { attributes: true, attributeFilter: ['class'] });
-        });
-    }, 1000);
-});
+// 3. Запускаем проверку каждые полсекунды (вдруг меню грузится с задержкой)
+setInterval(createRmToggle, 500);
