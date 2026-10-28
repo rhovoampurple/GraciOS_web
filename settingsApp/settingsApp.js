@@ -3312,26 +3312,104 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (ЧИСТАЯ ВЕРСИЯ БЕЗ БАГОВ)
+// HYPEROS 4 ROTATION (С UI И ПЛАВНОЙ АНИМАЦИЕЙ)
 // ==========================================
+let isIconRotation = localStorage.getItem("iconRotation") === "true";
+let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
+
+// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС (Тумблер и ползунок)
+function createRotationUI() {
+    const parallelToggle = document.getElementById("parallelAnimationToggle");
+    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
+    
+    if (parallelRow && !document.getElementById("rot_ui_container")) {
+        const rotHTML = `
+            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
+                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
+                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                </div>
+                
+                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
+                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
+                </div>
+            </div>
+        `;
+        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
+
+        document.getElementById("rot_switch").addEventListener("click", () => {
+            isIconRotation = !isIconRotation;
+            localStorage.setItem("iconRotation", isIconRotation);
+            
+            const sw = document.getElementById("rot_switch");
+            sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
+            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
+            
+            const wrapper = document.getElementById("rot_slider_wrapper");
+            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
+            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
+        });
+
+        document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
+            const val = e.target.value;
+            iconRotationAngle = parseInt(val);
+            localStorage.setItem("iconRotationAngle", iconRotationAngle);
+            document.getElementById("rot_angle_val").textContent = `${val}°`;
+        });
+    }
+}
+setInterval(createRotationUI, 500);
+
+// 2. ПЕРЕХВАТ ОТКРЫТИЯ (Плавно, через Web Animations API)
 const originalOpenRotation = openPopupFromCurrentButton;
-let iconRotationAngle = 90; // Угол поворота (можешь поменять на 180 или 45)
+let rotObserver = new MutationObserver(() => {}); // Создаем "пустой" наблюдатель
 
 openPopupFromCurrentButton = function() {
-    // 1. Вызываем оригинальную функцию (она уберет локскрин и включит фон)
+    // Сначала вызываем оригинальную функцию, чтобы она сделала всю свою работу
+    // (убрала локскрин, включила фон, добавила классы)
     originalOpenRotation.apply(this, arguments);
 
-    // 2. Магия поворота иконки
-    if (currentOpeningBtn) {
-        // Мгновенно ставим иконку в положение 90 градусов (без анимации)
-        currentOpeningBtn.style.transition = "none";
-        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+    if (isIconRotation) {
+        currentOpeningBtn.setAttribute("data-rotating", "true");
 
-        // Небольшая задержка, чтобы браузер "запомнил" начальное положение
-        setTimeout(() => {
-            // Включаем плавность и крутим в 0 градусов с увеличением
-            currentOpeningBtn.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-            currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-        }, 10);
+        // Запускаем ПЛАВНУЮ анимацию поверх оригинальной.
+        // fill: 'none' гарантирует, что по окончании анимации стили сбросятся, 
+        // и сайт продолжит работать как обычно.
+        currentOpeningBtn.animate([
+            { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
+            { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
+        ], {
+            duration: time_opening_app * 1000,
+            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+            fill: 'none'
+        });
+
+        // Настраиваем наблюдатель за закрытием именно этой иконки
+        rotObserver.disconnect(); // Отключаем старый, если был
+        rotObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const box = mutation.target;
+                    // Если класс open удален (приложение закрывается)
+                    if (!box.classList.contains('open') && box.getAttribute('data-rotating') === 'true') {
+                        box.removeAttribute('data-rotating');
+                        rotObserver.disconnect(); // СРАЗУ ОТКЛЮЧАЕМ, чтобы не ломать локскрин!
+                        
+                        // Запускаем анимацию закрытия (поворот обратно)
+                        box.animate([
+                            { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
+                            { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
+                        ], {
+                            duration: time_opening_app * 1000,
+                            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                            fill: 'none' // Не оставляем следов
+                        });
+                    }
+                }
+            });
+        });
+        
+        // Начинаем следить только за этой иконкой
+        rotObserver.observe(currentOpeningBtn, { attributes: true });
     }
 };
