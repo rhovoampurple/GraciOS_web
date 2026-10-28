@@ -3312,45 +3312,44 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// НАСТРОЙКА ВРАЩЕНИЯ ИКОНКИ (ИСПРАВЛЕННЫЙ UI)
+// НАСТРОЙКА ВРАЩЕНИЯ ИКОНКИ (ИСПРАВЛЕННЫЙ КОМПАКТНЫЙ UI)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
-// Функция добавления UI в подменю App opening animation
+// Функция добавления UI (вставляем под кнопку reset)
 function createRotationUI() {
-    const container = document.getElementById("app4AppOpeningAnimation");
+    const resetBtn = document.getElementById("reset_anim_open_app_btn");
     
-    if (container && !document.getElementById("rot_toggle_wrapper")) {
-        // ДОБАВЛЕНЫ СТИЛИ: margin-bottom: 40px, position: relative, z-index: 10
+    if (resetBtn && !document.getElementById("rot_ui_container")) {
         const rotHTML = `
-            <div class="khaysetting" id="rot_toggle_wrapper" style="display: flex; flex-direction: column; padding: 15px; margin-top: 10px; margin-bottom: 40px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; z-index: 10;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #333; font-size: 16px; font-weight: 500;">Icon Rotation</span>
-                    <div id="rot_switch" style="width: 50px; height: 30px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 15px; position: relative; transition: 0.3s; cursor: pointer;">
-                        <div style="width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '22px' : '2px'}; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                    </div>
+            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 15px auto; width: 90%; max-width: 350px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; position: relative; z-index: 10;">
+                <!-- Маленький тумблер слева -->
+                <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
+                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                 </div>
                 
-                <div id="rot_slider_wrapper" style="display: ${isIconRotation ? 'block' : 'none'}; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #666; font-size: 14px;">Angle</span>
-                        <span style="color: #f65268; font-size: 14px; font-weight: bold;" id="rot_angle_val">${iconRotationAngle}°</span>
-                    </div>
+                <!-- Ползунок справа -->
+                <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
                     <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
                 </div>
             </div>
         `;
         
-        container.insertAdjacentHTML('afterbegin', rotHTML);
+        // Вставляем СРАЗУ ПОСЛЕ кнопки reset
+        resetBtn.insertAdjacentHTML('afterend', rotHTML);
 
         document.getElementById("rot_switch").addEventListener("click", () => {
             isIconRotation = !isIconRotation;
             localStorage.setItem("iconRotation", isIconRotation);
             const sw = document.getElementById("rot_switch");
             sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
-            sw.firstElementChild.style.left = isIconRotation ? '22px' : '2px';
-            document.getElementById("rot_slider_wrapper").style.display = isIconRotation ? 'block' : 'none';
+            sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
+            
+            const wrapper = document.getElementById("rot_slider_wrapper");
+            wrapper.style.opacity = isIconRotation ? '1' : '0.4';
+            wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
         });
 
         document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
@@ -3365,46 +3364,53 @@ function createRotationUI() {
 setInterval(createRotationUI, 500);
 
 // ==========================================
-// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°)
+// ЛОГИКА ОТКРЫТИЯ (ИЗ 90° В 0°) - ТВОЙ РАБОЧИЙ КОД
 // ==========================================
-const originalOpenPopupRot = openPopupFromCurrentButton;
+let lastOpenPopupRot = null;
 
-openPopupFromCurrentButton = function() {
-    if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
-        originalOpenPopupRot.apply(this, arguments);
-        return;
-    }
-
-    if (isIconRotation) {
-        showPopup_open_close(app);
-        allApp.style.transform = "none"; // Сброс залипания контента
-
-        currentOpeningBtn.classList.add("open");
+setInterval(() => {
+    if (window.openPopupFromCurrentButton !== lastOpenPopupRot) {
+        const originalFunc = window.openPopupFromCurrentButton;
         
-        allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-        wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-        lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
+        window.openPopupFromCurrentButton = function() {
+            if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
+                originalFunc.apply(this, arguments);
+                return;
+            }
 
-        // Анимация: от 90° к 0° с одновременным увеличением
-        currentOpeningBtn.animate([
-            { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
-            { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
-        ], {
-            duration: time_opening_app * 1000,
-            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-            fill: 'forwards'
-        });
+            if (isIconRotation) {
+                showPopup_open_close(app);
+                allApp.style.transform = "none"; // Сброс залипания контента
 
-        currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+                currentOpeningBtn.classList.add("open");
+                
+                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+                lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
 
-        wallpaper.style.scale = `${scaleWallpaper}%`;
-        lp.classList.add("open");
-        lp.style.scale = `${scaleAllAppReverse}`;
-        allApp.style.scale = `${scaleAllApp}%`;
-        
-        nav.style.height = "40px";
-        isMo = true;
-    } else {
-        originalOpenPopupRot.apply(this, arguments);
+                // Анимация: от 90° к 0° с одновременным увеличением
+                currentOpeningBtn.animate([
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'forwards'
+                });
+
+                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+
+                wallpaper.style.scale = `${scaleWallpaper}%`;
+                lp.classList.add("open");
+                lp.style.scale = `${scaleAllAppReverse}`;
+                allApp.style.scale = `${scaleAllApp}%`;
+                
+                nav.style.height = "40px";
+                isMo = true;
+            } else {
+                originalFunc.apply(this, arguments);
+            }
+        };
+        lastOpenPopupRot = window.openPopupFromCurrentButton;
     }
-};
+}, 100);
