@@ -3311,3 +3311,27 @@ function preivewAnimationControlsCenter(e) {
 
   closeControlsCenter();
 }
+// ==========================================
+// HYPEROS 4 ROTATION (ЧИСТАЯ ВЕРСИЯ БЕЗ БАГОВ)
+// ==========================================
+const originalOpenRotation = openPopupFromCurrentButton;
+let iconRotationAngle = 90; // Угол поворота (можешь поменять на 180 или 45)
+
+openPopupFromCurrentButton = function() {
+    // 1. Вызываем оригинальную функцию (она уберет локскрин и включит фон)
+    originalOpenRotation.apply(this, arguments);
+
+    // 2. Магия поворота иконки
+    if (currentOpeningBtn) {
+        // Мгновенно ставим иконку в положение 90 градусов (без анимации)
+        currentOpeningBtn.style.transition = "none";
+        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
+
+        // Небольшая задержка, чтобы браузер "запомнил" начальное положение
+        setTimeout(() => {
+            // Включаем плавность и крутим в 0 градусов с увеличением
+            currentOpeningBtn.style.transition = `transform ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
+            currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+        }, 10);
+    }
+};
