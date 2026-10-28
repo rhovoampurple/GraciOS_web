@@ -3312,26 +3312,12 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (БЕЗ ЗАДЕРЖКИ + ПРИНУДИТЕЛЬНОЕ ЗАКРЫТИЕ)
+// HYPEROS 4 ROTATION (ПОЛНАЯ ПЕРЕЗАПИСЬ С НУЛЯ)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
-// 1. ДОБАВЛЯЕМ CSS ДЛЯ ПРИНУДИТЕЛЬНОГО ЗАКРЫТИЯ
-const rotStyle = document.createElement('style');
-rotStyle.innerHTML = `
-    @keyframes closeRotateAnim {
-        0% { transform: rotate(0deg) scale(var(--close-start-scale, 1)) !important; }
-        100% { transform: rotate(var(--close-angle, 90deg)) scale(1) !important; }
-    }
-    .box.closing-rot {
-        animation: closeRotateAnim var(--close-duration, 0.4s) cubic-bezier(0.23, 0.55, 0.54, 0.97) forwards !important;
-        transition: none !important;
-    }
-`;
-document.head.appendChild(rotStyle);
-
-// 2. КОМПАКТНЫЙ ИНТЕРФЕЙС (Под кнопкой reset)
+// 1. СОЗДАНИЕ ИНТЕРФЕЙСА (Компактный блок под кнопкой reset)
 function createRotationUI() {
     const resetBtn = document.getElementById("reset_anim_open_app_btn");
     
@@ -3343,8 +3329,8 @@ function createRotationUI() {
                 </div>
                 
                 <div id="rot_slider_wrapper" style="display: flex; align-items: center; flex-grow: 1; gap: 10px; opacity: ${isIconRotation ? '1' : '0.4'}; pointer-events: ${isIconRotation ? 'auto' : 'none'}; transition: 0.3s;">
-                    <input type="range" id="rot_angle_slider" min="0" max="180" step="15" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
-                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 35px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
+                    <input type="range" id="rot_angle_slider" min="-180" max="180" step="45" value="${iconRotationAngle}" style="width: 100%; accent-color: #f65268;">
+                    <span style="color: #f65268; font-size: 13px; font-weight: bold; min-width: 45px; text-align: right;" id="rot_angle_val">${iconRotationAngle}°</span>
                 </div>
             </div>
         `;
@@ -3362,8 +3348,8 @@ function createRotationUI() {
         });
 
         document.getElementById("rot_angle_slider").addEventListener("input", (e) => {
-            const val = e.target.value;
-            iconRotationAngle = parseInt(val);
+            const val = parseInt(e.target.value);
+            iconRotationAngle = val;
             localStorage.setItem("iconRotationAngle", iconRotationAngle);
             document.getElementById("rot_angle_val").textContent = `${val}°`;
         });
@@ -3371,7 +3357,7 @@ function createRotationUI() {
 }
 setInterval(createRotationUI, 500);
 
-// 3. ЛОГИКА ОТКРЫТИЯ (Без задержки)
+// 2. ПЕРЕХВАТ ОТКРЫТИЯ (С защитой от перезаписи)
 let lastOpenPopupRot = null;
 
 setInterval(() => {
@@ -3379,27 +3365,21 @@ setInterval(() => {
         const originalFunc = window.openPopupFromCurrentButton;
         
         window.openPopupFromCurrentButton = function() {
-            if (typeof isReduceMotion !== 'undefined' && isReduceMotion) {
-                originalFunc.apply(this, arguments);
-                return;
-            }
+            // Вызываем стоковую функцию (она уберет локскрин и настроит фон)
+            originalFunc.apply(this, arguments);
 
-            if (isIconRotation) {
-                showPopup_open_close(app);
-                allApp.style.transform = "none";
-                currentOpeningBtn.classList.add("open");
+            if (isIconRotation && currentOpeningBtn) {
+                // Помечаем иконку, чтобы при закрытии знать, что её нужно крутить
                 currentOpeningBtn.setAttribute("data-rotating", "true");
-                
-                allApp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-                wallpaper.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97)`;
-                lp.style.transition = `all ${time_opening_app}s cubic-bezier(0.23, 0.55, 0.54, 0.97), opacity ${currentSpeed3}s`;
 
-                // ФИКС ЗАДЕРЖКИ: Отключаем стандартный transition и ставим 90°
+                // Мгновенно ставим начальное положение (угол пользователя)
                 currentOpeningBtn.style.transition = "none";
                 currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(1)`;
-                void currentOpeningBtn.offsetWidth; // Принудительная перерисовка
+                
+                // Заставляем браузер перерисовать иконку в этом положении (фикс задержки)
+                void currentOpeningBtn.offsetWidth;
 
-                // Запускаем плавный поворот в 0°
+                // Запускаем плавную анимацию в 0 градусов
                 currentOpeningBtn.animate([
                     { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
                     { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
@@ -3409,56 +3389,55 @@ setInterval(() => {
                     fill: 'forwards'
                 });
 
+                // Фиксируем конечное положение для корректной работы закрытия
                 currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
-
-                wallpaper.style.scale = `${scaleWallpaper}%`;
-                lp.classList.add("open");
-                lp.style.scale = `${scaleAllAppReverse}`;
-                allApp.style.scale = `${scaleAllApp}%`;
-                
-                nav.style.height = "40px";
-                isMo = true;
-            } else {
-                originalFunc.apply(this, arguments);
             }
         };
         lastOpenPopupRot = window.openPopupFromCurrentButton;
     }
 }, 100);
 
-// 4. ЛОГИКА ЗАКРЫТИЯ (Принудительный CSS-поворот)
+// 3. НАБЛЮДАТЕЛЬ ЗАКРЫТИЯ (Плавный обратный поворот)
 const rotCloseObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
             const box = mutation.target;
             
-            // Если класс open пропал (приложение закрывается)
+            // Ловим момент, когда класс .open удален (приложение закрывается)
             if (!box.classList.contains('open') && box.getAttribute("data-rotating") === "true") {
                 box.removeAttribute("data-rotating");
-                
+
                 // Отменяем анимацию открытия, чтобы освободить стили
                 box.getAnimations().forEach(anim => anim.cancel());
                 
-                // Передаем переменные для CSS-анимации
-                box.style.setProperty('--close-start-scale', scaleAllAppReverse);
-                box.style.setProperty('--close-angle', `${iconRotationAngle}deg`);
-                box.style.setProperty('--close-duration', `${time_opening_app}s`);
+                // Принудительно отключаем transition, чтобы стоковый код не сжимал иконку
+                box.style.transition = "none";
                 
-                // Очищаем инлайн-стили и запускаем CSS-анимацию с !important
-                box.style.transform = "";
-                box.classList.add("closing-rot");
-                
-                // Очищаем стили после завершения, чтобы не сломать локскрин
-                setTimeout(() => {
-                    box.classList.remove("closing-rot");
+                // Фиксируем иконку в открытом состоянии (0 градусов)
+                box.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+                void box.offsetWidth; // Перерисовка
+
+                // Запускаем анимацию закрытия (из 0° в угол пользователя)
+                const closeAnim = box.animate([
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'none' // НЕ оставляем стили после завершения, чтобы не сломать локскрин
+                });
+
+                // Очищаем все наши следы после завершения анимации
+                closeAnim.onfinish = () => {
                     box.style.transform = "";
                     box.style.transition = "";
-                }, time_opening_app * 1000 + 50);
+                };
             }
         }
     });
 });
 
+// Подключаем наблюдатель ко всем иконкам
 window.addEventListener('load', () => {
     setInterval(() => {
         document.querySelectorAll('.box').forEach(box => {
