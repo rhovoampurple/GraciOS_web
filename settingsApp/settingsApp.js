@@ -3410,38 +3410,57 @@ setInterval(() => {
     }
 }, 100);
 
-// 3. ЗАКРЫТИЕ (Возврат и полная очистка)
-document.addEventListener("click", (e) => {
-    if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
-        const openBox = document.querySelector('.box.open[data-rotating="true"]');
-        
-        if (openBox && isIconRotation) {
-            openBox.removeAttribute("data-rotating");
-
-            // Отменяем анимацию открытия, чтобы освободить место
-            if (activeAnim) {
-                activeAnim.cancel();
-                activeAnim = null;
-            }
-
-            // Очищаем текущие стили, чтобы начать с чистого листа
-            openBox.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+// 3. ЗАКРЫТИЕ (ОБРАТНЫЙ ПОВОРОТ ОКНА)
+const rotCloseObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+            const box = mutation.target;
             
-            // Запускаем обратную анимацию (поворот в 90 и сжатие)
-            const closeAnim = openBox.animate([
-                { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
-                { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
-            ], {
-                duration: time_opening_app * 1000,
-                easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                fill: 'none' // Не оставляем стилей после анимации!
-            });
+            // Если класс open пропал (приложение закрывается)
+            if (!box.classList.contains('open') && box.getAttribute("data-rotating") === "true") {
+                box.removeAttribute("data-rotating");
+                
+                // Отменяем анимацию открытия, чтобы освободить место
+                if (activeAnim) {
+                    activeAnim.cancel();
+                    activeAnim = null;
+                }
 
-            // САМОЕ ВАЖНОЕ: когда анимация закончится, полностью стираем transform
-            closeAnim.onfinish = () => {
-                openBox.style.transform = ""; 
-                openBox.style.transition = "";
-            };
+                // 1. ОТКЛЮЧАЕМ стандартный transition сайта, чтобы он не сжимал иконку
+                box.style.transition = "none";
+                
+                // 2. Принудительно ставим окно в текущее открытое состояние (0 градусов)
+                box.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
+                
+                // 3. Форсируем перерисовку, чтобы браузер "запомнил" это положение
+                void box.offsetWidth;
+
+                // 4. Запускаем НАШУ обратную анимацию (поворот в 90 и сжатие)
+                const closeAnim = box.animate([
+                    { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
+                    { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
+                ], {
+                    duration: time_opening_app * 1000,
+                    easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
+                    fill: 'forwards' // Оставляем в конечном положении во время анимации
+                });
+
+                // 5. САМОЕ ВАЖНОЕ: когда анимация закончится, полностью стираем стили
+                closeAnim.onfinish = () => {
+                    box.style.transform = ""; 
+                    box.style.transition = "";
+                    closeAnim.cancel(); // Убираем все следы анимации
+                };
+            }
         }
-    }
+    });
+});
+
+// Подключаем наблюдатель к иконкам при загрузке
+window.addEventListener('load', () => {
+    setInterval(() => {
+        document.querySelectorAll('.box').forEach(box => {
+            rotCloseObserver.observe(box, { attributes: true, attributeFilter: ['class'] });
+        });
+    }, 1000);
 });
