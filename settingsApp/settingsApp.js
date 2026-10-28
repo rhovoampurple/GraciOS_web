@@ -3312,19 +3312,19 @@ function preivewAnimationControlsCenter(e) {
   closeControlsCenter();
 }
 // ==========================================
-// HYPEROS 4 ROTATION (С UI И ПЛАВНОЙ АНИМАЦИЕЙ)
+// HYPEROS 4 ROTATION (ФИНАЛЬНАЯ ВЕРСИЯ)
 // ==========================================
 let isIconRotation = localStorage.getItem("iconRotation") === "true";
 let iconRotationAngle = parseInt(localStorage.getItem("iconRotationAngle")) || 90;
 
-// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС (Тумблер и ползунок)
+// 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС
 function createRotationUI() {
-    const parallelToggle = document.getElementById("parallelAnimationToggle");
-    const parallelRow = parallelToggle ? parallelToggle.closest('.khaysetting') : null;
+    // Ищем контейнер подменю "App opening animation"
+    const container = document.getElementById("app4AppOpeningAnimation");
     
-    if (parallelRow && !document.getElementById("rot_ui_container")) {
+    if (container && !document.getElementById("rot_ui_container")) {
         const rotHTML = `
-            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px;">
+            <div class="khaysetting" id="rot_ui_container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 10px auto; width: 90%; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); gap: 12px; z-index: 10; position: relative;">
                 <div id="rot_switch" style="width: 38px; height: 22px; background: ${isIconRotation ? '#f65268' : '#e0e0e0'}; border-radius: 11px; position: relative; transition: 0.3s; cursor: pointer; flex-shrink: 0;">
                     <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: ${isIconRotation ? '18px' : '2px'}; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                 </div>
@@ -3335,16 +3335,15 @@ function createRotationUI() {
                 </div>
             </div>
         `;
-        parallelRow.insertAdjacentHTML('beforebegin', rotHTML);
+        // Вставляем в начало контейнера, чтобы не налезало на график
+        container.insertAdjacentHTML('afterbegin', rotHTML);
 
         document.getElementById("rot_switch").addEventListener("click", () => {
             isIconRotation = !isIconRotation;
             localStorage.setItem("iconRotation", isIconRotation);
-            
             const sw = document.getElementById("rot_switch");
             sw.style.background = isIconRotation ? '#f65268' : '#e0e0e0';
             sw.firstElementChild.style.left = isIconRotation ? '18px' : '2px';
-            
             const wrapper = document.getElementById("rot_slider_wrapper");
             wrapper.style.opacity = isIconRotation ? '1' : '0.4';
             wrapper.style.pointerEvents = isIconRotation ? 'auto' : 'none';
@@ -3358,58 +3357,50 @@ function createRotationUI() {
         });
     }
 }
+// Запускаем поиск контейнера постоянно, так как он может создаваться динамически
 setInterval(createRotationUI, 500);
 
-// 2. ПЕРЕХВАТ ОТКРЫТИЯ (Плавно, через Web Animations API)
+// 2. ПЕРЕХВАТ ОТКРЫТИЯ
 const originalOpenRotation = openPopupFromCurrentButton;
-let rotObserver = new MutationObserver(() => {}); // Создаем "пустой" наблюдатель
 
 openPopupFromCurrentButton = function() {
-    // Сначала вызываем оригинальную функцию, чтобы она сделала всю свою работу
-    // (убрала локскрин, включила фон, добавила классы)
+    // Сначала оригинальная функция задает стили
     originalOpenRotation.apply(this, arguments);
 
     if (isIconRotation) {
-        currentOpeningBtn.setAttribute("data-rotating", "true");
-
-        // Запускаем ПЛАВНУЮ анимацию поверх оригинальной.
-        // fill: 'none' гарантирует, что по окончании анимации стили сбросятся, 
-        // и сайт продолжит работать как обычно.
-        currentOpeningBtn.animate([
-            { transform: `rotate(${iconRotationAngle}deg) scale(1)` },
-            { transform: `rotate(0deg) scale(${scaleAllAppReverse})` }
-        ], {
-            duration: time_opening_app * 1000,
-            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-            fill: 'none'
-        });
-
-        // Настраиваем наблюдатель за закрытием именно этой иконки
-        rotObserver.disconnect(); // Отключаем старый, если был
-        rotObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    const box = mutation.target;
-                    // Если класс open удален (приложение закрывается)
-                    if (!box.classList.contains('open') && box.getAttribute('data-rotating') === 'true') {
-                        box.removeAttribute('data-rotating');
-                        rotObserver.disconnect(); // СРАЗУ ОТКЛЮЧАЕМ, чтобы не ломать локскрин!
-                        
-                        // Запускаем анимацию закрытия (поворот обратно)
-                        box.animate([
-                            { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
-                            { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
-                        ], {
-                            duration: time_opening_app * 1000,
-                            easing: 'cubic-bezier(0.23, 0.55, 0.54, 0.97)',
-                            fill: 'none' // Не оставляем следов
-                        });
-                    }
-                }
+        // Перебиваем стандартный transform на наш, с поворотом.
+        // Так как оригинальный код задал transition, браузер сам плавно 
+        // провернет иконку из 90 градусов в 0.
+        currentOpeningBtn.style.transform = `rotate(${iconRotationAngle}deg) scale(${scaleAllAppReverse})`;
+        
+        // Используем requestAnimationFrame, чтобы браузер успел применить поворот 90 град,
+        // а затем запускаем анимацию в 0 град.
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                currentOpeningBtn.style.transform = `rotate(0deg) scale(${scaleAllAppReverse})`;
             });
         });
-        
-        // Начинаем следить только за этой иконкой
-        rotObserver.observe(currentOpeningBtn, { attributes: true });
     }
 };
+
+// 3. ВОЗВРАТ ПРИ ЗАКРЫТИИ
+document.addEventListener("click", (e) => {
+    // Если нажата кнопка "Домой" или свайп (эмуляция клика)
+    if (e.target.closest("#nav") || e.target.closest(".nav-home")) {
+        if (!isIconRotation) return;
+
+        // Находим иконку, которая сейчас открыта
+        const openBox = document.querySelector('.box.open');
+        if (openBox) {
+            // Запускаем анимацию обратно в 90 градусов
+            openBox.animate([
+                { transform: `rotate(0deg) scale(${scaleAllAppReverse})` },
+                { transform: `rotate(${iconRotationAngle}deg) scale(1)` }
+            ], {
+                duration: 300, // Чуть быстрее закрытие
+                easing: 'ease-out',
+                fill: 'none' // НЕ фиксируем стили, чтобы не сломать локскрин!
+            });
+        }
+    }
+});
